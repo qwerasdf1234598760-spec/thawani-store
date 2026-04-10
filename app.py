@@ -96,15 +96,20 @@ def init_db():
         )
     ''')
     
-    admin_email = 'admin@thawani.store'
-    admin_pass = 'Admin123!'
-    hashed = generate_password_hash(admin_pass)
+    # ✅ الأدمن الصحيح
+    ADMIN_EMAIL = "qwerasdf1234598760@gmail.com"
+    ADMIN_PASS = "qaws54321"
     
+    hashed = generate_password_hash(ADMIN_PASS)
+    
+    # حذف الأدمن القديم وإضافة الجديد
     try:
-        c.execute("INSERT OR IGNORE INTO users (email, password_hash, is_admin) VALUES (?, ?, 1)", 
-                  (admin_email, hashed))
-    except:
-        pass
+        c.execute("DELETE FROM users WHERE email=?", (ADMIN_EMAIL,))
+        c.execute("INSERT INTO users (email, password_hash, is_admin) VALUES (?, ?, 1)", 
+                  (ADMIN_EMAIL, hashed))
+        logger.info(f"Admin created: {ADMIN_EMAIL}")
+    except Exception as e:
+        logger.error(f"Admin creation error: {e}")
     
     c.execute("SELECT COUNT(*) FROM categories")
     if c.fetchone()[0] == 0:
@@ -530,7 +535,7 @@ def index():
     return render_template_string(render_page('الرئيسية', f"""
     <header>
         <div class="logo">THAWANI</div>
-        <div class="user-info">{session['user'].split('@')[0]} | السلة: {cart_count}</div>
+        <div class="user-info">{session['user'].split('@')[0]} | السلة: {cart_count} | {'👑 أدمن' if session.get('is_admin') else '👤 عميل'}</div>
     </header>
     <div class="cat-bar">
         <a href="/" class="cat-item {'active' if cat=='الكل' else ''}">الكل</a>
@@ -682,22 +687,16 @@ def checkout():
                 try:
                     details = ", ".join([f"{i['name']} (x{i['quantity']})" for i in items])
                     
-                    # حفظ الطلب مباشرة بدون تعقيد
                     cursor = conn.execute('''
                         INSERT INTO orders (user_email, full_name, phone, card_img, items_details, total_price)
                         VALUES (?, ?, ?, ?, ?, ?)
                     ''', (session['user'], name, phone, filename, details, total))
                     
                     order_id = cursor.lastrowid
-                    
-                    # تفريغ السلة
                     conn.execute("DELETE FROM cart WHERE user_email=?", (session['user'],))
                     conn.commit()
-                    
-                    logger.info(f"Order saved: #{order_id} for {session['user']}")
                     conn.close()
                     
-                    # رسالة نجاح واضحة
                     if 'flash_messages' not in session:
                         session['flash_messages'] = []
                     session['flash_messages'].append({
@@ -709,7 +708,7 @@ def checkout():
                     return redirect(f'/order_success/{order_id}')
                     
                 except Exception as e:
-                    logger.error(f"Order save error: {e}")
+                    logger.error(f"Order error: {e}")
                     flash('خطأ في حفظ الطلب', 'error')
     
     conn.close()
@@ -763,7 +762,6 @@ def order_success(order_id):
             <div class="order-number-label">رقم الطلب</div>
             <div class="order-number-value" style="color:var(--primary);">#{order['id']}</div>
         </div>
-        <p style="color:var(--text-light); margin-bottom:24px;">سنتواصل معك قريباً</p>
         <a href="/orders" class="btn btn-primary">طلباتي</a>
     </div>
     """, show_nav=True))
@@ -779,9 +777,7 @@ def orders_history():
     status_text = {
         'pending': ('قيد المراجعة', 'badge-pending'),
         'approved': ('تم القبول', 'badge-approved'),
-        'rejected': ('مرفوض', 'badge-rejected'),
-        'shipped': ('تم الشحن', 'badge-approved'),
-        'delivered': ('تم التوصيل', 'badge-approved')
+        'rejected': ('مرفوض', 'badge-rejected')
     }
     
     return render_template_string(render_page('طلباتي', f"""
@@ -822,23 +818,13 @@ def view_receipt(order_id):
     if order['user_email'] != session['user'] and not session.get('is_admin'):
         abort(403)
     
-    receipt_path = os.path.join(UPLOAD_FOLDER, order['card_img'])
-    if not os.path.exists(receipt_path):
-        return render_template_string(render_page('خطأ', '''
-        <div class="empty-state"><div class="empty-state-icon">🖼️</div><h3>الصورة غير موجودة</h3></div>
-        '''))
-    
     return render_template_string(render_page('الإيصال', f"""
     <header><div class="logo">إيصال الدفع</div></header>
     <div style="padding: 16px; text-align: center;">
         <div style="background: white; padding: 20px; border-radius: 16px;">
             <h3 style="margin-bottom: 16px; color: var(--primary);">طلب #{order_id}</h3>
             <img src="/static/uploads/{order['card_img']}" class="receipt-img" 
-                 onclick="window.open(this.src, '_blank')"
-                 style="cursor: pointer;">
-            <p style="color: var(--text-light); margin-top: 12px; font-size: 12px;">
-                اضغط على الصورة للتكبير
-            </p>
+                 onclick="window.open(this.src, '_blank')" style="cursor: pointer;">
             <a href="/orders" class="btn btn-outline" style="margin-top: 16px;">العودة</a>
         </div>
     </div>
@@ -995,6 +981,7 @@ def login():
             session['user'] = email
             session['is_admin'] = bool(user['is_admin'])
             conn.close()
+            logger.info(f"Login successful: {email} (admin={user['is_admin']})")
             return redirect('/')
         else:
             # إنشاء حساب جديد
@@ -1005,6 +992,7 @@ def login():
                 session['user'] = email
                 session['is_admin'] = False
                 conn.close()
+                logger.info(f"New user created: {email}")
                 return redirect('/')
             except:
                 flash('خطأ في تسجيل الدخول', 'error')
@@ -1017,14 +1005,12 @@ def login():
             <div style="text-align:center; margin-bottom:24px;">
                 <div style="width:64px; height:64px; background:var(--primary); border-radius:16px; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; color:white; font-size:28px;">🌿</div>
                 <h1 style="color:var(--primary); font-size:24px;">THAWANI</h1>
-                <p style="color:var(--text-light); font-size:13px; margin-top:4px;">تسوق طبيعي، حياة أفضل</p>
             </div>
             <form method="POST">
                 <div class="form-group"><input name="email" type="email" placeholder="البريد الإلكتروني" required></div>
                 <div class="form-group"><input name="password" type="password" placeholder="كلمة المرور" required></div>
                 <button class="btn btn-primary btn-block">دخول</button>
             </form>
-            <p style="text-align:center; color:var(--text-light); font-size:12px; margin-top:16px;">سيتم إنشاء حساب جديد تلقائياً</p>
         </div>
     </div>
     """, show_nav=False))

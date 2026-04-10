@@ -85,6 +85,7 @@ def init_db():
         )
     ''')
     
+    # ✅ جدول التقييمات المحدث مع صورة
     c.execute('''
         CREATE TABLE IF NOT EXISTS reviews (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,24 +93,22 @@ def init_db():
             user_email TEXT NOT NULL,
             rating INTEGER,
             comment TEXT,
+            review_img TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     
-    # ✅ الأدمن الصحيح
     ADMIN_EMAIL = "qwerasdf1234598760@gmail.com"
     ADMIN_PASS = "qaws54321"
     
     hashed = generate_password_hash(ADMIN_PASS)
     
-    # حذف الأدمن القديم وإضافة الجديد
     try:
         c.execute("DELETE FROM users WHERE email=?", (ADMIN_EMAIL,))
         c.execute("INSERT INTO users (email, password_hash, is_admin) VALUES (?, ?, 1)", 
                   (ADMIN_EMAIL, hashed))
-        logger.info(f"Admin created: {ADMIN_EMAIL}")
-    except Exception as e:
-        logger.error(f"Admin creation error: {e}")
+    except:
+        pass
     
     c.execute("SELECT COUNT(*) FROM categories")
     if c.fetchone()[0] == 0:
@@ -328,6 +327,10 @@ CSS = """
     }
     .btn-block { width: 100%; margin-top: 10px; }
     .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-danger {
+        background: var(--error);
+        color: white;
+    }
     
     .cat-bar {
         display: flex;
@@ -473,6 +476,14 @@ CSS = """
     .success-icon { font-size: 80px; margin-bottom: 20px; }
     .success-title { color: var(--success); font-size: 24px; margin-bottom: 12px; }
     
+    /* ✅ صورة التقييم */
+    .review-img {
+        max-width: 100%;
+        border-radius: 8px;
+        margin-top: 8px;
+        border: 1px solid var(--border);
+    }
+    
     @media (min-width: 768px) {
         .container { grid-template-columns: repeat(3, 1fr); max-width: 900px; }
     }
@@ -560,13 +571,23 @@ def index():
 def product(id):
     conn = get_db()
     
+    # ✅ إضافة تقييم مع صورة
     if request.method == 'POST':
         rating = int(request.form.get('rating', 5))
         comment = request.form.get('comment', '').strip()
+        review_img = request.files.get('review_img')
+        
+        img_filename = None
+        if review_img and review_img.filename:
+            img_filename = save_upload(review_img)
+        
         if comment:
-            conn.execute("INSERT INTO reviews (product_id, user_email, rating, comment) VALUES (?,?,?,?)",
-                        (id, session['user'], rating, comment))
+            conn.execute(
+                "INSERT INTO reviews (product_id, user_email, rating, comment, review_img) VALUES (?,?,?,?,?)",
+                (id, session['user'], rating, comment, img_filename)
+            )
             conn.commit()
+        return redirect(f'/product/{id}')
     
     p = conn.execute("SELECT * FROM products WHERE id=?", (id,)).fetchone()
     revs = conn.execute("SELECT * FROM reviews WHERE product_id=? ORDER BY id DESC", (id,)).fetchall()
@@ -583,18 +604,31 @@ def product(id):
         
         <div style="margin-top: 30px;">
             <h3 style="margin-bottom: 16px;">التقييمات ({len(revs)})</h3>
-            {''.join([f'<div style="background:white; padding:12px; border-radius:12px; margin-bottom:10px; border:1px solid var(--border);"><div style="color:var(--primary); margin-bottom:4px;">{"★"*r["rating"]}</div><p style="font-size:13px;">{r["comment"]}</p></div>' for r in revs])}
+            {''.join([f'''
+            <div style="background:white; padding:12px; border-radius:12px; margin-bottom:10px; border:1px solid var(--border);">
+                <div style="color:var(--primary); margin-bottom:4px;">{"★"*r["rating"]}</div>
+                <p style="font-size:13px;">{r["comment"]}</p>
+                {f'<img src="/static/uploads/{r["review_img"]}" class="review-img" onclick="window.open(this.src)">' if r["review_img"] else ''}
+                <div style="color:var(--text-light); font-size:11px; margin-top:8px;">{r["user_email"][:20]}...</div>
+            </div>
+            ''' for r in revs])}
             
-            <form method="POST" style="margin-top: 20px;">
+            <form method="POST" enctype="multipart/form-data" style="margin-top: 20px;">
                 <div class="form-group">
                     <select name="rating" class="btn btn-outline" style="width: auto;">
                         <option value="5">⭐⭐⭐⭐⭐</option>
                         <option value="4">⭐⭐⭐⭐</option>
                         <option value="3">⭐⭐⭐</option>
+                        <option value="2">⭐⭐</option>
+                        <option value="1">⭐</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <textarea name="comment" placeholder="رأيك في المنتج..." rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>📷 صورة (اختياري)</label>
+                    <input type="file" name="review_img" accept="image/*" style="padding:10px;">
                 </div>
                 <button class="btn btn-primary btn-block">نشر التقييم</button>
             </form>
@@ -871,6 +905,13 @@ def admin():
             if oid and status:
                 conn.execute("UPDATE orders SET status=?, notes=? WHERE id=?", (status, notes, oid))
                 conn.commit()
+        
+        # ✅ حذف منتج نهائي
+        elif action == 'delete_product':
+            pid = request.form.get('product_id', type=int)
+            if pid:
+                conn.execute("DELETE FROM products WHERE id=?", (pid,))
+                conn.commit()
     
     stats = {
         'users': conn.execute("SELECT COUNT(*) FROM users").fetchone()[0],
@@ -957,8 +998,22 @@ def admin():
             <h3>🛍️ المنتجات</h3>
             <div style="overflow-x:auto;">
                 <table>
-                    <tr><th>الصورة</th><th>الاسم</th><th>السعر</th><th>المخزون</th></tr>
-                    {''.join([f'<tr><td><img src="/static/uploads/{p["img"]}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;"></td><td>{p["name"]}</td><td>{p["price"]:.3f}</td><td>{p["stock"]}</td></tr>' for p in products[:10]])}
+                    <tr><th>الصورة</th><th>الاسم</th><th>السعر</th><th>المخزون</th><th>حذف</th></tr>
+                    {''.join([f'''
+                    <tr>
+                        <td><img src="/static/uploads/{p["img"]}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;"></td>
+                        <td>{p["name"]}</td>
+                        <td>{p["price"]:.3f}</td>
+                        <td>{p["stock"]}</td>
+                        <td>
+                            <form method="POST" style="display:inline;" onsubmit="return confirm('حذف المنتج نهائياً؟')">
+                                <input type="hidden" name="action" value="delete_product">
+                                <input type="hidden" name="product_id" value="{p["id"]}">
+                                <button type="submit" class="btn btn-danger btn-sm">🗑️ حذف</button>
+                            </form>
+                        </td>
+                    </tr>
+                    ''' for p in products])}
                 </table>
             </div>
         </div>
@@ -981,10 +1036,8 @@ def login():
             session['user'] = email
             session['is_admin'] = bool(user['is_admin'])
             conn.close()
-            logger.info(f"Login successful: {email} (admin={user['is_admin']})")
             return redirect('/')
         else:
-            # إنشاء حساب جديد
             try:
                 hashed = generate_password_hash(password)
                 conn.execute("INSERT INTO users (email, password_hash) VALUES (?, ?)", (email, hashed))
@@ -992,7 +1045,6 @@ def login():
                 session['user'] = email
                 session['is_admin'] = False
                 conn.close()
-                logger.info(f"New user created: {email}")
                 return redirect('/')
             except:
                 flash('خطأ في تسجيل الدخول', 'error')
@@ -1022,3 +1074,4 @@ def logout():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=False)
+

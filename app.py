@@ -14,10 +14,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(32).hex())
 
-# ⚡ تعديل لـ Render: استخدام المسار الدائم إذا كان متوفراً
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Render Persistent Disk path (إذا كان متوفراً)
 RENDER_DISK = os.environ.get('RENDER_DISK_PATH', '/opt/render/project/src')
 if os.path.exists(RENDER_DISK):
     DATA_DIR = os.path.join(RENDER_DISK, 'data')
@@ -25,14 +22,11 @@ else:
     DATA_DIR = BASE_DIR
 
 os.makedirs(DATA_DIR, exist_ok=True)
-
 UPLOAD_FOLDER = os.path.join(DATA_DIR, 'static', 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# ⚡ مسار قاعدة البيانات في القرص الدائم
 DB_PATH = os.path.join(DATA_DIR, 'database.db')
 
 def get_db():
@@ -127,7 +121,6 @@ def init_db():
         )
     ''')
     
-    # جدول سجل الدخول
     c.execute('''
         CREATE TABLE IF NOT EXISTS login_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -192,47 +185,57 @@ def save_upload(file):
     file.save(filepath)
     return filename
 
+# ✨ CSS جديد فاخر وعالمي
 CSS = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
     
     :root {
-        --primary: #1b5e20;
-        --primary-light: #4caf50;
+        --primary: #1a5f2a;
+        --primary-light: #2e7d32;
         --primary-dark: #0d3312;
-        --accent: #2e7d32;
-        --gold: #81c784;
+        --accent: #4caf50;
+        --gold: #d4af37;
         --bg: #f8faf8;
         --card: #ffffff;
         --text: #1a1a1a;
         --text-light: #666666;
-        --border: #e0ece0;
+        --text-muted: #999999;
+        --border: #e8f0e8;
         --success: #4caf50;
         --error: #e53935;
         --warning: #fb8c00;
-        --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-        --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
-        --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
-        --radius-sm: 12px;
-        --radius-md: 16px;
-        --radius-lg: 24px;
+        --shadow-sm: 0 2px 12px rgba(0,0,0,0.06);
+        --shadow-md: 0 8px 30px rgba(0,0,0,0.1);
+        --shadow-lg: 0 20px 60px rgba(0,0,0,0.15);
+        --shadow-glow: 0 0 40px rgba(76, 175, 80, 0.15);
+        --radius-sm: 16px;
+        --radius-md: 24px;
+        --radius-lg: 32px;
     }
     
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+        box-sizing: border-box; 
+        margin: 0; 
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+    }
     
     body {
-        font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
-        background: var(--bg);
+        font-family: 'Cairo', 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(135deg, #f8faf8 0%, #f0f7f0 100%);
         direction: rtl;
         color: var(--text);
-        padding-bottom: 80px;
-        line-height: 1.6;
+        padding-bottom: 100px;
+        line-height: 1.7;
         -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
     }
     
     .flash-messages {
         position: fixed;
-        top: 80px;
+        top: 100px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 9999;
@@ -240,539 +243,828 @@ CSS = """
         max-width: 400px;
     }
     .flash {
-        padding: 14px 24px;
+        padding: 16px 28px;
         border-radius: var(--radius-md);
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         text-align: center;
-        font-weight: 600;
-        font-size: 14px;
+        font-weight: 700;
+        font-size: 15px;
         box-shadow: var(--shadow-lg);
-        animation: slideDown 0.3s ease;
+        animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
     }
     @keyframes slideDown {
-        from { opacity: 0; transform: translate(-50%, -20px); }
-        to { opacity: 1; transform: translate(-50%, 0); }
+        from { opacity: 0; transform: translate(-50%, -30px) scale(0.95); }
+        to { opacity: 1; transform: translate(-50%, 0) scale(1); }
     }
-    .flash.success { background: var(--success); color: white; }
-    .flash.error { background: var(--error); color: white; }
-    .flash.warning { background: var(--warning); color: white; }
+    .flash.success { 
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.95), rgba(46, 125, 50, 0.95)); 
+        color: white; 
+    }
+    .flash.error { 
+        background: linear-gradient(135deg, rgba(229, 57, 53, 0.95), rgba(198, 40, 53, 0.95)); 
+        color: white; 
+    }
+    .flash.warning { 
+        background: linear-gradient(135deg, rgba(251, 140, 0, 0.95), rgba(230, 81, 0, 0.95)); 
+        color: white; 
+    }
     
+    /* ✨ Header فاخر */
     header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        padding: 20px;
+        padding: 24px 20px;
         text-align: center;
         position: sticky;
         top: 0;
         z-index: 1000;
         box-shadow: var(--shadow-md);
+        position: relative;
+        overflow: hidden;
+    }
+    header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, var(--gold), transparent);
     }
     .logo {
-        font-size: 26px;
-        font-weight: 800;
+        font-size: 32px;
+        font-weight: 900;
         color: white;
-        letter-spacing: 2px;
+        letter-spacing: 4px;
         text-transform: uppercase;
+        position: relative;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        font-family: 'Cairo', sans-serif;
     }
     .user-info {
-        color: rgba(255,255,255,0.85);
-        font-size: 12px;
-        margin-top: 6px;
-        font-weight: 500;
+        color: rgba(255,255,255,0.9);
+        font-size: 13px;
+        margin-top: 8px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
     }
     
+    /* ✨ شريط البحث الفاخر */
+    .search-container {
+        background: white;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 600px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border);
+    }
+    .search-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .search-input {
+        flex: 1;
+        padding: 16px 50px 16px 20px;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 16px;
+        font-family: inherit;
+        background: var(--bg);
+        transition: all 0.3s ease;
+        color: var(--text);
+    }
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(26, 95, 42, 0.1);
+        background: white;
+    }
+    .search-btn {
+        position: absolute;
+        right: 8px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(26, 95, 42, 0.3);
+    }
+    .search-btn:hover {
+        transform: scale(1.1) rotate(5deg);
+        background: var(--primary-dark);
+    }
+    
+    /* ✨ Bottom Navigation فاخر */
     .bottom-nav {
         position: fixed;
         bottom: 0;
         left: 0;
         width: 100%;
-        background: rgba(255,255,255,0.95);
-        backdrop-filter: blur(10px);
+        background: rgba(255,255,255,0.98);
+        backdrop-filter: blur(20px);
         display: flex;
         justify-content: space-around;
-        padding: 12px 0 8px;
-        border-top: 1px solid var(--border);
+        padding: 16px 0 12px;
+        border-top: 1px solid rgba(0,0,0,0.05);
         z-index: 1000;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.08);
     }
     .nav-item {
-        color: var(--text-light);
+        color: var(--text-muted);
         text-decoration: none;
-        font-size: 11px;
-        font-weight: 600;
+        font-size: 12px;
+        font-weight: 700;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
-        padding: 8px 16px;
-        border-radius: var(--radius-md);
-        transition: all 0.3s;
+        gap: 6px;
+        padding: 10px 20px;
+        border-radius: 20px;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
     }
-    .nav-item:hover { color: var(--primary); }
+    .nav-item:hover { 
+        color: var(--primary); 
+        transform: translateY(-2px);
+    }
     .nav-item.active {
         color: var(--primary);
-        background: rgba(76, 175, 80, 0.1);
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(26, 95, 42, 0.05));
     }
-    .nav-icon { font-size: 22px; }
+    .nav-item.active::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        width: 4px;
+        height: 4px;
+        background: var(--primary);
+        border-radius: 50%;
+    }
+    .nav-icon { 
+        font-size: 24px; 
+        transition: transform 0.3s ease;
+    }
+    .nav-item:hover .nav-icon {
+        transform: scale(1.2);
+    }
     
+    /* ✨ Container Grid فاخر */
     .container {
-        padding: 16px;
+        padding: 20px;
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        max-width: 600px;
+        gap: 16px;
+        max-width: 1200px;
         margin: 0 auto;
     }
     
+    /* ✨ بطاقات المنتجات الفاخرة */
     .card {
         background: var(--card);
         border-radius: var(--radius-md);
         overflow: hidden;
         box-shadow: var(--shadow-sm);
         border: 1px solid var(--border);
-        transition: all 0.3s;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
     }
-    .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+    .card:hover { 
+        transform: translateY(-8px); 
+        box-shadow: var(--shadow-lg), var(--shadow-glow);
+    }
     .card:active { transform: scale(0.98); }
+    
+    .card-img-wrapper {
+        position: relative;
+        overflow: hidden;
+        height: 160px;
+    }
     .card img {
         width: 100%;
-        height: 140px;
+        height: 100%;
         object-fit: cover;
         background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .card-body { padding: 14px; }
+    .card:hover img {
+        transform: scale(1.1);
+    }
+    .card-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: linear-gradient(135deg, var(--gold), #b8941f);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 800;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 10;
+    }
+    
+    .card-body { 
+        padding: 20px; 
+        background: white;
+        position: relative;
+    }
+    .card-body::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: linear-gradient(to bottom, transparent, white);
+    }
+    
     .product-title {
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 14px;
+        font-weight: 700;
         color: var(--text);
-        height: 40px;
+        height: 48px;
         overflow: hidden;
-        line-height: 1.5;
-        margin-bottom: 10px;
+        line-height: 1.6;
+        margin-bottom: 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
     }
     .price {
         color: var(--primary);
-        font-weight: 800;
-        font-size: 16px;
+        font-weight: 900;
+        font-size: 18px;
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+    }
+    .price-currency {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 600;
     }
     
     .btn {
         border: none;
-        padding: 12px 20px;
+        padding: 14px 24px;
         border-radius: var(--radius-sm);
-        font-weight: 700;
+        font-weight: 800;
         cursor: pointer;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
-        font-size: 14px;
+        font-size: 15px;
         font-family: inherit;
-        transition: all 0.3s;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        letter-spacing: 0.5px;
     }
     .btn-primary {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
-        box-shadow: 0 4px 15px rgba(27, 94, 32, 0.3);
+        box-shadow: 0 4px 20px rgba(26, 95, 42, 0.3);
+        position: relative;
+        overflow: hidden;
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(27, 94, 32, 0.4); }
-    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    .btn-primary:hover { 
+        transform: translateY(-3px); 
+        box-shadow: 0 8px 30px rgba(26, 95, 42, 0.4);
+    }
+    .btn-primary:hover::before {
+        left: 100%;
+    }
+    .btn-primary:active { transform: scale(0.95); }
+    
     .btn-outline {
-        background: transparent;
+        background: white;
         color: var(--primary);
         border: 2px solid var(--primary);
+        font-weight: 700;
     }
-    .btn-outline:hover { background: var(--bg); }
-    .btn-block { width: 100%; margin-top: 12px; }
-    .btn-sm { padding: 8px 14px; font-size: 12px; }
+    .btn-outline:hover { 
+        background: var(--bg); 
+        transform: translateY(-2px);
+    }
+    .btn-block { 
+        width: 100%; 
+        margin-top: 16px; 
+    }
+    .btn-sm { padding: 10px 18px; font-size: 13px; }
     .btn-danger {
         background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
         color: white;
+        box-shadow: 0 4px 15px rgba(229, 57, 53, 0.3);
     }
     
+    /* ✨ شريط الأصناف الفاخر */
     .cat-bar {
         display: flex;
         overflow-x: auto;
-        padding: 16px;
-        gap: 10px;
+        padding: 24px 20px;
+        gap: 12px;
         background: white;
         border-bottom: 1px solid var(--border);
         scrollbar-width: none;
+        position: sticky;
+        top: 88px;
+        z-index: 100;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
     }
     .cat-bar::-webkit-scrollbar { display: none; }
     .cat-item {
         background: var(--bg);
         color: var(--text-light);
-        padding: 10px 20px;
-        border-radius: 25px;
+        padding: 12px 28px;
+        border-radius: 30px;
         text-decoration: none;
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 14px;
+        font-weight: 700;
         white-space: nowrap;
         border: 2px solid transparent;
-        transition: all 0.3s;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
-    .cat-item:hover { border-color: var(--primary-light); color: var(--primary); }
+    .cat-item:hover { 
+        border-color: var(--primary-light); 
+        color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
     .cat-item.active {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
-        box-shadow: 0 4px 15px rgba(27, 94, 32, 0.3);
+        box-shadow: 0 8px 25px rgba(26, 95, 42, 0.3);
+        border-color: transparent;
     }
     
-    .form-group { margin-bottom: 20px; }
+    .form-group { margin-bottom: 24px; }
     label {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         color: var(--text);
-        font-size: 14px;
-        font-weight: 600;
+        font-size: 15px;
+        font-weight: 700;
     }
     input, select, textarea {
         width: 100%;
-        padding: 14px 16px;
+        padding: 16px 20px;
         background: white;
         border: 2px solid var(--border);
         color: var(--text);
         border-radius: var(--radius-sm);
         font-family: inherit;
-        font-size: 15px;
-        transition: all 0.3s;
+        font-size: 16px;
+        transition: all 0.3s ease;
     }
     input:focus, select:focus, textarea:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        box-shadow: 0 0 0 4px rgba(26, 95, 42, 0.08);
     }
     
+    /* ✨ بطاقات الطلبات الفاخرة */
     .order-card {
         background: white;
-        padding: 20px;
+        padding: 28px;
         border-radius: var(--radius-md);
-        margin-bottom: 16px;
+        margin-bottom: 20px;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+    }
+    .order-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
     }
     .order-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 14px;
+        margin-bottom: 16px;
     }
-    .order-id { font-weight: 700; color: var(--primary); font-size: 15px; }
+    .order-id { 
+        font-weight: 900; 
+        color: var(--primary); 
+        font-size: 18px; 
+        letter-spacing: 1px;
+    }
     .badge {
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
+        padding: 8px 18px;
+        border-radius: 25px;
+        font-size: 12px;
+        font-weight: 800;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    .badge-pending { background: #fff3e0; color: #e65100; }
-    .badge-approved { background: #e8f5e9; color: var(--primary); }
-    .badge-rejected { background: #ffebee; color: var(--error); }
+    .badge-pending { background: linear-gradient(135deg, #fff3e0, #ffe0b2); color: #e65100; }
+    .badge-approved { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); color: var(--primary); }
+    .badge-rejected { background: linear-gradient(135deg, #ffebee, #ffcdd2); color: var(--error); }
     
+    /* ✨ سلات التسوق الفاخرة */
     .cart-item {
         display: flex;
-        gap: 14px;
+        gap: 20px;
         background: white;
-        padding: 16px;
+        padding: 24px;
         border-radius: var(--radius-md);
-        margin-bottom: 12px;
+        margin-bottom: 16px;
         border: 1px solid var(--border);
         align-items: center;
         box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+    }
+    .cart-item:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateX(-4px);
     }
     .cart-item img {
-        width: 70px;
-        height: 70px;
+        width: 90px;
+        height: 90px;
         object-fit: cover;
         border-radius: var(--radius-sm);
         background: var(--bg);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .empty-state {
         text-align: center;
-        padding: 80px 20px;
+        padding: 100px 20px;
         color: var(--text-light);
     }
-    .empty-state-icon { font-size: 72px; margin-bottom: 20px; opacity: 0.4; }
+    .empty-state-icon { 
+        font-size: 80px; 
+        margin-bottom: 24px; 
+        opacity: 0.3;
+        filter: grayscale(100%);
+    }
+    .empty-state h3 {
+        font-size: 22px;
+        color: var(--text);
+        margin-bottom: 12px;
+    }
     
+    /* ✨ Admin Sections فاخرة */
     .admin-section {
         background: white;
-        padding: 24px;
+        padding: 32px;
         border-radius: var(--radius-md);
-        margin-bottom: 20px;
+        margin-bottom: 24px;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-sm);
     }
-    .admin-section h3 {
-        color: var(--primary);
-        margin-bottom: 20px;
-        font-size: 18px;
-        font-weight: 700;
-    }
     
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: var(--bg); color: var(--primary); padding: 14px; font-weight: 700; }
-    td { border-bottom: 1px solid var(--border); padding: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { 
+        background: var(--bg); 
+        color: var(--primary); 
+        padding: 18px; 
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+    }
+    td { border-bottom: 1px solid var(--border); padding: 18px; }
     
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        margin-bottom: 20px;
+        gap: 16px;
+        margin-bottom: 24px;
     }
     .stat-card {
         background: white;
-        padding: 20px;
+        padding: 28px;
         border-radius: var(--radius-md);
         text-align: center;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
-    .stat-number { font-size: 28px; font-weight: 800; color: var(--primary); }
-    .stat-label { font-size: 12px; color: var(--text-light); margin-top: 6px; font-weight: 600; }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
+    .stat-card:hover::before {
+        opacity: 1;
+    }
+    .stat-number { 
+        font-size: 36px; 
+        font-weight: 900; 
+        color: var(--primary);
+        margin-bottom: 8px;
+    }
+    .stat-label { 
+        font-size: 13px; 
+        color: var(--text-muted); 
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
     
     .receipt-img {
         max-width: 100%;
         border-radius: var(--radius-md);
         border: 2px solid var(--border);
-        margin-top: 16px;
+        margin-top: 20px;
+        box-shadow: var(--shadow-sm);
     }
     
-    .success-page { text-align: center; padding: 60px 20px; }
-    .success-icon { font-size: 90px; margin-bottom: 24px; }
-    .success-title { color: var(--success); font-size: 28px; margin-bottom: 16px; font-weight: 800; }
+    .success-page { text-align: center; padding: 80px 20px; }
+    .success-icon { 
+        font-size: 100px; 
+        margin-bottom: 32px;
+        animation: bounceIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes bounceIn {
+        0% { transform: scale(0); opacity: 0; }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .success-title { 
+        color: var(--success); 
+        font-size: 32px; 
+        margin-bottom: 20px; 
+        font-weight: 900;
+        letter-spacing: 1px;
+    }
     
     .review-img {
         max-width: 100%;
         border-radius: var(--radius-sm);
-        margin-top: 10px;
+        margin-top: 12px;
         border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
     }
     
+    /* ✨ Track Delivery Animation */
     .delivery-track {
         background: #e8e8e8;
-        height: 50px;
-        border-radius: 25px;
+        height: 60px;
+        border-radius: 30px;
         position: relative;
-        margin: 20px 0;
+        margin: 24px 0;
         overflow: hidden;
         border: 2px solid var(--border);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
     }
-    
     .delivery-truck {
         position: absolute;
-        right: 8px;
+        right: 12px;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 28px;
+        font-size: 32px;
         transition: all 1s linear;
         z-index: 10;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
     }
-    
     .track-line {
         position: absolute;
         left: 0;
         top: 50%;
         transform: translateY(-50%);
-        height: 4px;
+        height: 6px;
         background: linear-gradient(90deg, var(--primary-light), var(--primary));
-        border-radius: 2px;
+        border-radius: 3px;
         transition: width 1s linear;
+        box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
     }
-    
     .delivery-info {
         text-align: center;
         color: var(--text-light);
-        font-size: 13px;
-        margin-top: 10px;
-        font-weight: 600;
+        font-size: 14px;
+        margin-top: 12px;
+        font-weight: 700;
     }
-    
     .delivery-complete-box {
         background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
         color: white;
-        padding: 24px;
+        padding: 32px;
         border-radius: var(--radius-md);
         text-align: center;
-        margin: 20px 0;
+        margin: 24px 0;
         box-shadow: var(--shadow-md);
         animation: slideDown 0.5s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .delivery-complete-box::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: rotate 10s linear infinite;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
     
-    .review-delivery-form {
-        background: rgba(255,255,255,0.95);
-        padding: 20px;
-        border-radius: var(--radius-md);
-        margin-top: 16px;
-    }
-    
-    .truck-moving {
-        animation: bounce 0.6s infinite alternate;
-    }
-    
-    @keyframes bounce {
-        from { transform: translateY(-50%) translateY(0); }
-        to { transform: translateY(-50%) translateY(-4px); }
-    }
-    
+    /* ✨ Admin Container Modern */
     .admin-container {
         max-width: 100%;
         margin: 0 auto;
-        padding: 12px;
+        padding: 20px;
     }
-    
     .admin-header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
-        padding: 20px;
+        padding: 32px;
         border-radius: var(--radius-md);
-        margin-bottom: 16px;
+        margin-bottom: 24px;
         box-shadow: var(--shadow-md);
+        position: relative;
+        overflow: hidden;
     }
-    
+    .admin-header::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
     .admin-header h1 {
-        font-size: 22px;
-        margin-bottom: 4px;
-        font-weight: 800;
+        font-size: 28px;
+        margin-bottom: 8px;
+        font-weight: 900;
+        position: relative;
     }
-    
     .admin-header p {
         opacity: 0.9;
-        font-size: 13px;
-        font-weight: 500;
+        font-size: 15px;
+        font-weight: 600;
+        position: relative;
     }
     
     .dashboard-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin-bottom: 16px;
+        gap: 16px;
+        margin-bottom: 24px;
     }
-    
     .dashboard-card {
         background: white;
         border-radius: var(--radius-md);
-        padding: 16px;
+        padding: 24px;
         box-shadow: var(--shadow-sm);
         border: 1px solid var(--border);
+        transition: all 0.3s ease;
     }
-    
+    .dashboard-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
     .dashboard-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
-        margin-bottom: 10px;
+        font-size: 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    
-    .dashboard-card.primary .dashboard-icon { background: #e8f5e9; }
-    .dashboard-card.warning .dashboard-icon { background: #fff3e0; }
-    .dashboard-card.success .dashboard-icon { background: #e8f5e9; }
-    .dashboard-card.info .dashboard-icon { background: #e3f2fd; }
+    .dashboard-card.primary .dashboard-icon { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+    .dashboard-card.warning .dashboard-icon { background: linear-gradient(135deg, #fff3e0, #ffe0b2); }
+    .dashboard-card.success .dashboard-icon { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); }
+    .dashboard-card.info .dashboard-icon { background: linear-gradient(135deg, #e3f2fd, #bbdefb); }
     
     .dashboard-number {
-        font-size: 24px;
-        font-weight: 800;
+        font-size: 32px;
+        font-weight: 900;
         color: var(--text);
-        margin-bottom: 2px;
+        margin-bottom: 4px;
     }
-    
     .dashboard-label {
-        color: var(--text-light);
-        font-size: 11px;
-        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
     }
     
     .admin-section-new {
         background: white;
         border-radius: var(--radius-md);
-        padding: 16px;
-        margin-bottom: 16px;
+        padding: 28px;
+        margin-bottom: 24px;
         box-shadow: var(--shadow-sm);
         border: 1px solid var(--border);
     }
-    
     .section-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
-        padding-bottom: 12px;
-        border-bottom: 2px solid var(--bg);
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--border);
     }
-    
     .section-title {
-        font-size: 16px;
-        font-weight: 700;
+        font-size: 20px;
+        font-weight: 900;
         color: var(--primary);
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
+        letter-spacing: 0.5px;
     }
     
     .btn-modern {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
         border: none;
-        padding: 10px 16px;
+        padding: 12px 20px;
         border-radius: var(--radius-sm);
-        font-weight: 700;
+        font-weight: 800;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.3s ease;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        font-size: 13px;
+        gap: 8px;
+        font-size: 14px;
+        box-shadow: 0 4px 15px rgba(26, 95, 42, 0.2);
     }
-    
     .btn-modern:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(27, 94, 32, 0.3);
+        box-shadow: 0 8px 25px rgba(26, 95, 42, 0.3);
     }
-    
     .btn-modern.secondary {
         background: white;
         color: var(--primary);
         border: 2px solid var(--primary);
     }
-    
-    .btn-modern.secondary:hover {
-        background: var(--bg);
-    }
-    
     .btn-modern.danger {
         background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
     }
-    
     .btn-modern.small {
-        padding: 6px 12px;
-        font-size: 11px;
+        padding: 8px 16px;
+        font-size: 13px;
     }
     
     .orders-table {
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        font-size: 12px;
+        font-size: 14px;
     }
-    
     .orders-table th {
         background: var(--bg);
         color: var(--primary);
-        font-weight: 700;
-        padding: 12px 8px;
+        font-weight: 800;
+        padding: 16px 12px;
         text-align: right;
-        font-size: 11px;
+        font-size: 13px;
+        letter-spacing: 0.5px;
     }
-    
-    .orders-table th:first-child { border-radius: 0 10px 10px 0; }
-    .orders-table th:last-child { border-radius: 10px 0 0 10px; }
-    
+    .orders-table th:first-child { border-radius: 0 12px 12px 0; }
+    .orders-table th:last-child { border-radius: 12px 0 0 12px; }
     .orders-table td {
-        padding: 12px 8px;
+        padding: 16px 12px;
         border-bottom: 1px solid var(--border);
         vertical-align: middle;
     }
@@ -780,144 +1072,138 @@ CSS = """
     .status-badge {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        padding: 6px 10px;
-        border-radius: 15px;
-        font-size: 10px;
-        font-weight: 700;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 800;
     }
-    
-    .status-pending { background: #fff3e0; color: #e65100; }
-    .status-approved { background: #e8f5e9; color: var(--primary); }
-    .status-rejected { background: #ffebee; color: #c62828; }
+    .status-pending { background: linear-gradient(135deg, #fff3e0, #ffe0b2); color: #e65100; }
+    .status-approved { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); color: var(--primary); }
+    .status-rejected { background: linear-gradient(135deg, #ffebee, #ffcdd2); color: #c62828; }
     
     .product-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 20px;
     }
-    
     .product-card-admin {
         background: white;
         border-radius: var(--radius-md);
         overflow: hidden;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
     }
-    
+    .product-card-admin:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-md);
+    }
     .product-img-admin {
         width: 100%;
-        height: 120px;
+        height: 140px;
         object-fit: cover;
     }
-    
     .product-info-admin {
-        padding: 12px;
+        padding: 20px;
     }
-    
     .product-name-admin {
-        font-weight: 700;
-        font-size: 13px;
-        margin-bottom: 6px;
+        font-weight: 800;
+        font-size: 15px;
+        margin-bottom: 10px;
         color: var(--text);
-        height: 36px;
+        height: 44px;
         overflow: hidden;
+        line-height: 1.5;
     }
-    
     .product-meta-admin {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        color: var(--text-light);
-        font-size: 11px;
-        margin-bottom: 10px;
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-bottom: 16px;
     }
-    
     .product-price-admin {
         color: var(--primary);
-        font-weight: 800;
-        font-size: 15px;
+        font-weight: 900;
+        font-size: 18px;
     }
     
     .form-modern {
         display: grid;
-        gap: 14px;
+        gap: 20px;
     }
-    
     .form-grid-2 {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 14px;
+        gap: 20px;
     }
     
     @media (min-width: 640px) {
         .form-grid-2 { grid-template-columns: 1fr 1fr; }
         .product-grid { grid-template-columns: repeat(3, 1fr); }
         .dashboard-grid { grid-template-columns: repeat(4, 1fr); }
-        .admin-container { max-width: 1200px; padding: 20px; }
-        .admin-header { padding: 24px; }
-        .admin-header h1 { font-size: 26px; }
-        .admin-section-new { padding: 24px; }
-        .section-title { font-size: 18px; }
+        .container { grid-template-columns: repeat(3, 1fr); }
+    }
+    
+    @media (min-width: 1024px) {
+        .container { grid-template-columns: repeat(4, 1fr); max-width: 1400px; }
+        .admin-container { max-width: 1400px; padding: 32px; }
     }
     
     .form-group-modern {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
     }
-    
     .form-group-modern label {
-        font-weight: 700;
+        font-weight: 800;
         color: var(--text);
-        font-size: 13px;
+        font-size: 14px;
+        letter-spacing: 0.5px;
     }
-    
     .form-control-modern {
-        padding: 12px 14px;
+        padding: 14px 18px;
         border: 2px solid var(--border);
         border-radius: var(--radius-sm);
-        font-size: 14px;
-        transition: all 0.3s;
+        font-size: 15px;
+        transition: all 0.3s ease;
         background: white;
         width: 100%;
     }
-    
     .form-control-modern:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        box-shadow: 0 0 0 4px rgba(26, 95, 42, 0.08);
     }
     
     .tabs-container {
         display: flex;
-        gap: 6px;
-        margin-bottom: 16px;
+        gap: 8px;
+        margin-bottom: 24px;
         border-bottom: 2px solid var(--border);
         padding-bottom: 0;
         overflow-x: auto;
         scrollbar-width: none;
     }
-    
     .tabs-container::-webkit-scrollbar { display: none; }
-    
     .tab-btn {
-        padding: 10px 14px;
+        padding: 16px 24px;
         background: none;
         border: none;
-        color: var(--text-light);
-        font-weight: 700;
+        color: var(--text-muted);
+        font-weight: 800;
         cursor: pointer;
         position: relative;
-        transition: all 0.3s;
-        font-size: 12px;
+        transition: all 0.3s ease;
+        font-size: 14px;
         white-space: nowrap;
+        letter-spacing: 0.5px;
     }
-    
     .tab-btn.active {
         color: var(--primary);
     }
-    
     .tab-btn.active::after {
         content: '';
         position: absolute;
@@ -928,242 +1214,252 @@ CSS = """
         background: var(--primary);
         border-radius: 3px 3px 0 0;
     }
-    
     .tab-content {
         display: none;
     }
-    
     .tab-content.active {
         display: block;
-        animation: fadeIn 0.3s ease;
+        animation: fadeIn 0.4s ease;
     }
-    
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
     
     .category-tag {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        padding: 4px 10px;
+        gap: 6px;
+        padding: 6px 14px;
         background: var(--bg);
-        border-radius: 15px;
-        font-size: 11px;
+        border-radius: 20px;
+        font-size: 12px;
         color: var(--primary);
-        font-weight: 600;
+        font-weight: 800;
     }
     
     .review-card-admin {
-        background: linear-gradient(135deg, #f8f8f8 0%, #ffffff 100%);
+        background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
         border-radius: var(--radius-md);
-        padding: 16px;
-        margin-bottom: 12px;
-        border-right: 3px solid var(--primary);
+        padding: 24px;
+        margin-bottom: 16px;
+        border-right: 4px solid var(--primary);
         box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
     }
-    
+    .review-card-admin:hover {
+        transform: translateX(-4px);
+        box-shadow: var(--shadow-md);
+    }
     .review-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 14px;
     }
-    
     .reviewer-name {
-        font-weight: 700;
+        font-weight: 900;
         color: var(--primary);
-        font-size: 13px;
+        font-size: 15px;
     }
-    
     .review-date {
-        font-size: 11px;
-        color: var(--text-light);
+        font-size: 13px;
+        color: var(--text-muted);
+        font-weight: 600;
     }
-    
     .review-text {
         color: var(--text);
-        line-height: 1.6;
-        font-size: 13px;
+        line-height: 1.8;
+        font-size: 15px;
     }
     
     .order-id-badge {
-        background: var(--primary);
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
         color: white;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-weight: 800;
-        font-size: 11px;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-weight: 900;
+        font-size: 13px;
+        box-shadow: 0 4px 12px rgba(26, 95, 42, 0.2);
     }
-    
     .premium-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
         color: #333;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
-        box-shadow: 0 2px 8px rgba(255, 170, 0, 0.3);
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 12px;
+        font-weight: 800;
+        box-shadow: 0 4px 15px rgba(255, 170, 0, 0.3);
     }
-    
     .shipping-badge {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        padding: 4px 10px;
-        border-radius: 15px;
-        font-size: 11px;
-        font-weight: 700;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 800;
     }
-    
     .shipping-free {
-        background: #e8f5e9;
+        background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
         color: var(--primary);
     }
-    
     .shipping-paid {
-        background: #fff3e0;
+        background: linear-gradient(135deg, #fff3e0, #ffe0b2);
         color: #e65100;
     }
     
     .radio-group {
         display: flex;
-        gap: 12px;
-        margin-bottom: 16px;
+        gap: 16px;
+        margin-bottom: 24px;
     }
-    
     .radio-option {
         flex: 1;
-        padding: 16px;
+        padding: 24px;
         border: 2px solid var(--border);
         border-radius: var(--radius-md);
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.3s ease;
         text-align: center;
+        background: white;
     }
-    
     .radio-option:hover {
         border-color: var(--primary-light);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
     }
-    
     .radio-option.selected {
         border-color: var(--primary);
-        background: rgba(76, 175, 80, 0.05);
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.05), rgba(26, 95, 42, 0.02));
+        box-shadow: 0 0 0 4px rgba(26, 95, 42, 0.08);
     }
-    
     .radio-option input {
         display: none;
     }
-    
     .radio-label {
-        font-weight: 700;
-        font-size: 14px;
+        font-weight: 800;
+        font-size: 15px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
     }
-    
     .radio-icon {
-        font-size: 24px;
+        font-size: 28px;
     }
-    
     .shipping-price-input {
         display: none;
     }
-    
     .shipping-price-input.show {
         display: block;
         animation: slideDown 0.3s ease;
     }
     
-    /* أنماط سجل الدخول */
+    /* ✨ Login Logs Premium */
     .login-log-card {
         background: white;
         border-radius: var(--radius-md);
-        padding: 16px;
-        margin-bottom: 12px;
+        padding: 24px;
+        margin-bottom: 16px;
         border: 1px solid var(--border);
         box-shadow: var(--shadow-sm);
         position: relative;
+        transition: all 0.3s ease;
     }
-    
+    .login-log-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
     .log-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid var(--border);
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--border);
     }
-    
     .log-time {
-        font-size: 12px;
-        color: var(--text-light);
-        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-muted);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    
     .log-details {
         display: grid;
-        gap: 10px;
+        gap: 14px;
     }
-    
     .log-row {
         display: flex;
         align-items: center;
-        gap: 10px;
-        background: var(--bg);
-        padding: 10px;
+        gap: 12px;
+        background: linear-gradient(135deg, #fafafa, #f5f5f5);
+        padding: 16px;
         border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
     }
-    
     .log-label {
-        font-size: 12px;
-        color: var(--text-light);
-        font-weight: 700;
-        min-width: 80px;
+        font-size: 14px;
+        color: var(--text-muted);
+        font-weight: 800;
+        min-width: 100px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    
     .log-value {
         flex: 1;
-        font-family: monospace;
-        font-size: 13px;
+        font-family: 'Courier New', monospace;
+        font-size: 15px;
         color: var(--text);
-        font-weight: 600;
+        font-weight: 700;
         word-break: break-all;
+        letter-spacing: 1px;
     }
-    
     .eye-btn {
-        background: var(--primary);
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
         color: white;
         border: none;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 16px;
-        transition: all 0.3s;
+        font-size: 18px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(26, 95, 42, 0.3);
     }
-    
     .eye-btn:hover {
-        background: var(--primary-dark);
-        transform: scale(1.1);
+        transform: scale(1.1) rotate(10deg);
+        box-shadow: 0 6px 20px rgba(26, 95, 42, 0.4);
+    }
+    .hidden-text {
+        filter: blur(5px);
+        user-select: none;
+        opacity: 0.7;
     }
     
-    .hidden-text {
-        filter: blur(4px);
-        user-select: none;
+    .truck-moving {
+        animation: bounce 0.8s infinite alternate;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    }
+    @keyframes bounce {
+        from { transform: translateY(-50%) translateY(0) rotate(-5deg); }
+        to { transform: translateY(-50%) translateY(-8px) rotate(5deg); }
     }
     
     @media (min-width: 768px) {
-        .container { grid-template-columns: repeat(3, 1fr); max-width: 900px; }
+        .card-img-wrapper { height: 200px; }
+        .product-title { font-size: 16px; height: 52px; }
+        .price { font-size: 20px; }
+        .logo { font-size: 40px; }
     }
 </style>
 """
@@ -1210,14 +1506,23 @@ def render_page(title, content, show_nav=True):
 @login_required
 def index():
     cat = request.args.get('cat', 'الكل')
+    search = request.args.get('search', '').strip()
+    
     conn = get_db()
     cats = conn.execute("SELECT * FROM categories").fetchall()
     
-    if cat == 'الكل':
-        prods = conn.execute("SELECT * FROM products WHERE is_active=1").fetchall()
-    else:
-        prods = conn.execute("SELECT * FROM products WHERE is_active=1 AND category=?", (cat,)).fetchall()
+    query = "SELECT * FROM products WHERE is_active=1"
+    params = []
     
+    if cat != 'الكل':
+        query += " AND category=?"
+        params.append(cat)
+    
+    if search:
+        query += " AND (name LIKE ? OR description LIKE ?)"
+        params.extend([f'%{search}%', f'%{search}%'])
+    
+    prods = conn.execute(query, params).fetchall()
     cart_count = conn.execute("SELECT SUM(quantity) FROM cart WHERE user_email=?", (session['user'],)).fetchone()[0] or 0
     conn.close()
     
@@ -1226,6 +1531,16 @@ def index():
         active_class = 'active' if cat == c['name'] else ''
         html_cats += f'<a href="/?cat={c["name"]}" class="cat-item {active_class}">{c["name"]}</a>'
     
+    # ✨ شريط البحث الفاخر
+    search_html = f'''
+    <div class="search-container">
+        <form action="/" method="GET" class="search-box">
+            <input type="text" name="search" class="search-input" placeholder="ابحث عن منتج..." value="{search}">
+            <button type="submit" class="search-btn">🔍</button>
+        </form>
+    </div>
+    '''
+    
     html_prods = ''
     if prods:
         for p in prods:
@@ -1233,19 +1548,26 @@ def index():
                 shipping_html = '<span class="shipping-badge shipping-free">🚚 مجاني</span>'
             else:
                 shipping_html = f'<span class="shipping-badge shipping-paid">🚚 {p["shipping_price"]:.3f} OMR</span>'
+            
             html_prods += f'''
             <div class="card">
-                <img src="/static/uploads/{p["img"]}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23e8f5e9%22 width=%22100%22 height=%22100%22/></svg>'">
+                <div class="card-img-wrapper">
+                    <img src="/static/uploads/{p["img"]}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23e8f5e9%22 width=%22100%22 height=%22100%22/></svg>'">
+                    <div class="card-badge">⭐ جديد</div>
+                </div>
                 <div class="card-body">
                     <div class="product-title">{p["name"]}</div>
-                    <div style="margin-bottom: 8px;">{shipping_html}</div>
-                    <div class="price">{p["price"]:.3f} OMR</div>
+                    <div style="margin-bottom: 12px;">{shipping_html}</div>
+                    <div class="price">{p["price"]:.3f} <span class="price-currency">OMR</span></div>
                     <a href="/product/{p["id"]}" class="btn btn-primary btn-block">التفاصيل</a>
                 </div>
             </div>
             '''
     else:
-        html_prods = '<div class="empty-state"><div class="empty-state-icon">📭</div><h3>لا توجد منتجات</h3></div>'
+        if search:
+            html_prods = f'<div class="empty-state"><div class="empty-state-icon">🔍</div><h3>لا توجد نتائج لـ "{search}"</h3><p style="margin-top: 10px; font-size: 14px;">جرب كلمة بحث أخرى</p><a href="/" class="btn btn-primary" style="margin-top: 20px;">عرض كل المنتجات</a></div>'
+        else:
+            html_prods = '<div class="empty-state"><div class="empty-state-icon">📭</div><h3>لا توجد منتجات</h3></div>'
     
     user_type = '👑 أدمن' if session.get('is_admin') else '👤 عميل'
     
@@ -1254,8 +1576,9 @@ def index():
         <div class="logo">THAWANI</div>
         <div class="user-info">{session['user'].split('@')[0]} | السلة: {cart_count} | {user_type}</div>
     </header>
+    {search_html}
     <div class="cat-bar">
-        <a href="/" class="cat-item {'active' if cat=='الكل' else ''}">الكل</a>
+        <a href="/" class="cat-item {'active' if cat=='الكل' and not search else ''}">الكل</a>
         {html_cats}
     </div>
     <div class="container">
@@ -1290,9 +1613,9 @@ def product(id):
     conn.close()
     
     if p['shipping_type'] == 'free':
-        shipping_html = '<span class="shipping-badge shipping-free" style="font-size: 13px; padding: 6px 12px;">🚚 شحن مجاني</span>'
+        shipping_html = '<span class="shipping-badge shipping-free" style="font-size: 14px; padding: 8px 16px;">🚚 شحن مجاني</span>'
     else:
-        shipping_html = f'<span class="shipping-badge shipping-paid" style="font-size: 13px; padding: 6px 12px;">🚚 تكلفة الشحن: {p["shipping_price"]:.3f} OMR</span>'
+        shipping_html = f'<span class="shipping-badge shipping-paid" style="font-size: 14px; padding: 8px 16px;">🚚 تكلفة الشحن: {p["shipping_price"]:.3f} OMR</span>'
     
     html_revs = ''
     for r in revs:
@@ -1301,45 +1624,45 @@ def product(id):
         if r['review_img']:
             img_html = f'<img src="/static/uploads/{r["review_img"]}" class="review-img" onclick="window.open(this.src)">'
         html_revs += f'''
-        <div style="background:white; padding:16px; border-radius:var(--radius-md); margin-bottom:12px; border:1px solid var(--border); box-shadow: var(--shadow-sm);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <div style="color:var(--primary); font-size: 16px; letter-spacing: 2px;">{stars}</div>
-                <span style="font-size: 12px; color: var(--text-light); font-weight: 600;">{r["user_email"][:15]}...</span>
+        <div style="background:white; padding:24px; border-radius:var(--radius-md); margin-bottom:16px; border:1px solid var(--border); box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div style="color:var(--primary); font-size: 18px; letter-spacing: 2px;">{stars}</div>
+                <span style="font-size: 13px; color: var(--text-muted); font-weight: 700;">{r["user_email"][:15]}...</span>
             </div>
-            <p style="font-size:14px; line-height: 1.6; color: var(--text);">{r["comment"]}</p>
+            <p style="font-size:15px; line-height: 1.8; color: var(--text);">{r["comment"]}</p>
             {img_html}
-            <div style="color:var(--text-light); font-size:11px; margin-top: 10px; font-weight: 500;">{r["created_at"][:16]}</div>
+            <div style="color:var(--text-muted); font-size:12px; margin-top: 14px; font-weight: 700;">{r["created_at"][:16]}</div>
         </div>
         '''
     
     return render_template_string(render_page('المنتج', f"""
     <header><div class="logo">تفاصيل المنتج</div></header>
-    <div style="padding: 16px; max-width: 600px; margin: 0 auto;">
-        <div style="position: relative; margin-bottom: 20px;">
-            <img src="/static/uploads/{p['img']}" style="width:100%; border-radius:var(--radius-lg); box-shadow: var(--shadow-md);">
-            <div class="premium-badge" style="position: absolute; top: 12px; right: 12px;">
+    <div style="padding: 24px; max-width: 800px; margin: 0 auto;">
+        <div style="position: relative; margin-bottom: 28px; border-radius:var(--radius-lg); overflow:hidden; box-shadow: var(--shadow-lg);">
+            <img src="/static/uploads/{p['img']}" style="width:100%; display:block;">
+            <div class="premium-badge" style="position: absolute; top: 20px; right: 20px; font-size: 14px; padding: 10px 20px;">
                 ⭐ مميز
             </div>
         </div>
-        <h2 style="color:var(--primary); margin-bottom:10px; font-size: 24px; font-weight: 800;">{p['name']}</h2>
-        <div style="margin-bottom: 16px;">{shipping_html}</div>
-        <div class="price" style="font-size:28px; margin-bottom:16px; font-weight: 800;">{p['price']:.3f} <span style="font-size: 16px; color: var(--text-light);">OMR</span></div>
-        <p style="color:var(--text-light); margin-bottom:24px; line-height: 1.8; font-size: 15px;">{p['description'] or 'لا يوجد وصف'}</p>
-        <div style="display: flex; gap: 12px; margin-bottom: 30px;">
-            <a href="/add_to_cart/{p['id']}" class="btn btn-primary btn-block" style="flex: 2; padding: 16px; font-size: 16px;">أضف للسلة 🛒</a>
+        <h2 style="color:var(--primary); margin-bottom:16px; font-size: 32px; font-weight: 900;">{p['name']}</h2>
+        <div style="margin-bottom: 24px;">{shipping_html}</div>
+        <div class="price" style="font-size:36px; margin-bottom:24px; font-weight: 900;">{p['price']:.3f} <span style="font-size: 18px; color: var(--text-muted);">OMR</span></div>
+        <p style="color:var(--text-light); margin-bottom:32px; line-height: 2; font-size: 17px;">{p['description'] or 'لا يوجد وصف'}</p>
+        <div style="display: flex; gap: 16px; margin-bottom: 40px;">
+            <a href="/add_to_cart/{p['id']}" class="btn btn-primary btn-block" style="flex: 2; padding: 20px; font-size: 18px;">أضف للسلة 🛒</a>
         </div>
         
-        <div style="margin-top: 30px;">
-            <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+        <div style="margin-top: 40px;">
+            <h3 style="margin-bottom: 28px; font-size: 24px; font-weight: 900; display: flex; align-items: center; gap: 12px;">
                 <span>التقييمات</span>
-                <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 15px; font-size: 13px;">{len(revs)}</span>
+                <span style="background: var(--primary); color: white; padding: 6px 16px; border-radius: 20px; font-size: 15px;">{len(revs)}</span>
             </h3>
             {html_revs}
             
-            <form method="POST" enctype="multipart/form-data" style="margin-top: 24px; background: white; padding: 20px; border-radius: var(--radius-md); border: 2px solid var(--border);">
-                <h4 style="margin-bottom: 16px; color: var(--primary); font-weight: 700;">✍️ أضف تقييمك</h4>
+            <form method="POST" enctype="multipart/form-data" style="margin-top: 32px; background: white; padding: 32px; border-radius: var(--radius-md); border: 2px solid var(--border); box-shadow: var(--shadow-sm);">
+                <h4 style="margin-bottom: 24px; color: var(--primary); font-weight: 900; font-size: 20px;">✍️ أضف تقييمك</h4>
                 <div class="form-group">
-                    <select name="rating" class="form-control-modern" style="width: auto;">
+                    <select name="rating" class="form-control-modern" style="width: auto; font-size: 16px;">
                         <option value="5">⭐⭐⭐⭐⭐ (ممتاز)</option>
                         <option value="4">⭐⭐⭐⭐ (جيد جداً)</option>
                         <option value="3">⭐⭐⭐ (جيد)</option>
@@ -1348,13 +1671,13 @@ def product(id):
                     </select>
                 </div>
                 <div class="form-group">
-                    <textarea name="comment" placeholder="اكتب رأيك في المنتج..." rows="3" required class="form-control-modern"></textarea>
+                    <textarea name="comment" placeholder="اكتب رأيك في المنتج..." rows="4" required class="form-control-modern" style="resize: vertical;"></textarea>
                 </div>
                 <div class="form-group">
-                    <label style="font-size: 13px; color: var(--text-light);">📷 إرفاق صورة (اختياري)</label>
-                    <input type="file" name="review_img" accept="image/*" class="form-control-modern" style="padding: 12px;">
+                    <label style="font-size: 14px; color: var(--text-muted); font-weight: 700;">📷 إرفاق صورة (اختياري)</label>
+                    <input type="file" name="review_img" accept="image/*" class="form-control-modern" style="padding: 16px;">
                 </div>
-                <button class="btn btn-primary btn-block" style="padding: 14px;">نشر التقييم</button>
+                <button class="btn btn-primary btn-block" style="padding: 18px; font-size: 16px;">نشر التقييم</button>
             </form>
         </div>
     </div>
@@ -1404,13 +1727,13 @@ def cart():
             <div class="cart-item">
                 <img src="/static/uploads/{i["img"]}">
                 <div style="flex:1;">
-                    <div style="font-weight:700; font-size:15px; margin-bottom: 4px;">{i["name"]}</div>
-                    <div style="color:var(--primary); font-size:14px; font-weight: 600;">{i["price"]:.3f} OMR × {i["quantity"]}</div>
-                    <div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">{shipping_text}</div>
+                    <div style="font-weight:900; font-size:17px; margin-bottom: 6px; color: var(--text);">{i["name"]}</div>
+                    <div style="color:var(--primary); font-size:16px; font-weight: 800;">{i["price"]:.3f} OMR × {i["quantity"]}</div>
+                    <div style="font-size: 13px; color: var(--text-muted); margin-top: 6px; font-weight: 700;">{shipping_text}</div>
                 </div>
                 <div style="text-align:left;">
-                    <div style="font-weight:800; font-size: 16px; color: var(--text); margin-bottom: 8px;">{(i["price"]*i["quantity"]):.3f}</div>
-                    <a href="/remove_from_cart/{i["id"]}" class="btn btn-sm" style="color:var(--error); font-weight: 600; padding: 6px 12px;">🗑️ حذف</a>
+                    <div style="font-weight:900; font-size: 18px; color: var(--text); margin-bottom: 12px;">{(i["price"]*i["quantity"]):.3f}</div>
+                    <a href="/remove_from_cart/{i["id"]}" class="btn btn-sm" style="color:var(--error); font-weight: 800; padding: 8px 16px;">🗑️ حذف</a>
                 </div>
             </div>
             '''
@@ -1419,29 +1742,29 @@ def cart():
         
         shipping_breakdown = ''
         if shipping_total > 0:
-            shipping_breakdown = f'<div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size: 14px; color: var(--text-light);"><span>الشحن:</span><span>{shipping_total:.3f} OMR</span></div>'
+            shipping_breakdown = f'<div style="display:flex; justify-content:space-between; margin-bottom:16px; font-size: 16px; color: var(--text-muted); font-weight: 700;"><span>الشحن:</span><span>{shipping_total:.3f} OMR</span></div>'
         
         checkout_html = f'''
-        <div style="background:white; padding:20px; border-radius:var(--radius-md); margin-top:20px; box-shadow: var(--shadow-md); border: 2px solid var(--border);">
-            <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size: 14px;">
+        <div style="background:white; padding:32px; border-radius:var(--radius-md); margin-top:28px; box-shadow: var(--shadow-md); border: 2px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; margin-bottom:16px; font-size: 16px; font-weight: 700;">
                 <span>المجموع:</span>
-                <span style="font-weight: 700;">{total:.3f} OMR</span>
+                <span style="font-weight: 900;">{total:.3f} OMR</span>
             </div>
             {shipping_breakdown}
-            <div style="border-top:2px solid var(--border); margin-top:16px; padding-top:16px; display:flex; justify-content:space-between; align-items: center;">
-                <span style="font-size: 16px; font-weight: 700;">الإجمالي:</span>
-                <b style="color:var(--primary); font-size:26px; font-weight: 800;">{grand_total:.3f} <span style="font-size: 14px;">OMR</span></b>
+            <div style="border-top:3px solid var(--border); margin-top:24px; padding-top:24px; display:flex; justify-content:space-between; align-items: center;">
+                <span style="font-size: 18px; font-weight: 900;">الإجمالي:</span>
+                <b style="color:var(--primary); font-size:32px; font-weight: 900;">{grand_total:.3f} <span style="font-size: 16px;">OMR</span></b>
             </div>
-            <a href="/checkout" class="btn btn-primary btn-block" style="padding: 16px; font-size: 16px; margin-top: 16px;">إتمام الطلب ➡️</a>
+            <a href="/checkout" class="btn btn-primary btn-block" style="padding: 20px; font-size: 18px; margin-top: 24px;">إتمام الطلب ➡️</a>
         </div>
         '''
     else:
-        html_items = '<div class="empty-state"><div class="empty-state-icon">🛒</div><h3>السلة فارغة</h3><p style="margin-top: 10px; font-size: 14px;">تصفح المنتجات وأضف ما تحب</p><a href="/" class="btn btn-primary" style="margin-top: 20px;">تصفح المنتجات</a></div>'
+        html_items = '<div class="empty-state"><div class="empty-state-icon">🛒</div><h3>السلة فارغة</h3><p style="margin-top: 10px; font-size: 16px;">تصفح المنتجات وأضف ما تحب</p><a href="/" class="btn btn-primary" style="margin-top: 24px; padding: 16px 32px;">تصفح المنتجات</a></div>'
         checkout_html = ''
     
     return render_template_string(render_page('السلة', f"""
     <header><div class="logo">سلة التسوق</div></header>
-    <div style="padding: 16px; max-width: 600px; margin: 0 auto;">
+    <div style="padding: 24px; max-width: 700px; margin: 0 auto;">
         {html_items}
         {checkout_html}
     </div>
@@ -1522,41 +1845,41 @@ def checkout():
     for i in items:
         item_shipping = 0 if i['shipping_type'] == 'free' else i['shipping_price'] * i['quantity']
         shipping_text = 'مجاني' if i['shipping_type'] == 'free' else f'{item_shipping:.3f} OMR'
-        html_items += f'<div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; padding: 8px 0; border-bottom: 1px solid var(--bg);"><span style="font-weight: 500;">{i["name"]} <span style="color: var(--primary); font-weight: 700;">×{i["quantity"]}</span></span><span style="font-weight: 700;">{(i["price"]*i["quantity"]):.3f}</span></div>'
+        html_items += f'<div style="display:flex; justify-content:space-between; margin-bottom:14px; font-size:16px; padding: 10px 0; border-bottom: 1px solid var(--border);"><span style="font-weight: 700;">{i["name"]} <span style="color: var(--primary); font-weight: 900;">×{i["quantity"]}</span></span><span style="font-weight: 900;">{(i["price"]*i["quantity"]):.3f}</span></div>'
     
     shipping_breakdown = ''
     if shipping_total > 0:
-        shipping_breakdown = f'<div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top: 1px dashed var(--border);"><span style="font-size: 14px; color: var(--text-light);">تكلفة الشحن:</span><span style="font-weight: 700; color: #e65100;">{shipping_total:.3f} OMR</span></div>'
+        shipping_breakdown = f'<div style="display:flex; justify-content:space-between; margin-top:16px; padding-top:16px; border-top: 2px dashed var(--border);"><span style="font-size: 16px; color: var(--text-muted); font-weight: 700;">تكلفة الشحن:</span><span style="font-weight: 900; color: #e65100;">{shipping_total:.3f} OMR</span></div>'
     
     return render_template_string(render_page('إتمام الطلب', f"""
     <header><div class="logo">إتمام الطلب</div></header>
-    <div style="padding: 16px; max-width: 500px; margin: 0 auto;">
-        <div style="background:white; padding:20px; border-radius:var(--radius-md); margin-bottom:16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border);">
-            <h3 style="margin-bottom:16px; color:var(--primary); font-weight: 700; font-size: 18px;">📋 ملخص الطلب</h3>
+    <div style="padding: 24px; max-width: 600px; margin: 0 auto;">
+        <div style="background:white; padding:28px; border-radius:var(--radius-md); margin-bottom:24px; box-shadow: var(--shadow-sm); border: 2px solid var(--border);">
+            <h3 style="margin-bottom:24px; color:var(--primary); font-weight: 900; font-size: 22px; display: flex; align-items: center; gap: 10px;">📋 ملخص الطلب</h3>
             {html_items}
             {shipping_breakdown}
-            <div style="border-top:2px solid var(--border); margin-top:16px; padding-top:16px; display:flex; justify-content:space-between; align-items: center;">
-                <span style="font-weight: 700; font-size: 16px;">الإجمالي</span>
-                <span style="color:var(--primary); font-size:24px; font-weight: 800;">{grand_total:.3f} <span style="font-size: 14px;">OMR</span></span>
+            <div style="border-top:3px solid var(--border); margin-top:24px; padding-top:24px; display:flex; justify-content:space-between; align-items: center;">
+                <span style="font-weight: 900; font-size: 18px;">الإجمالي</span>
+                <span style="color:var(--primary); font-size:28px; font-weight: 900;">{grand_total:.3f} <span style="font-size: 16px;">OMR</span></span>
             </div>
         </div>
         
-        <form method="POST" enctype="multipart/form-data" style="background:white; padding:24px; border-radius:var(--radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border);">
-            <h3 style="margin-bottom: 20px; color: var(--primary); font-weight: 700;">📝 معلومات التوصيل</h3>
+        <form method="POST" enctype="multipart/form-data" style="background:white; padding:32px; border-radius:var(--radius-md); box-shadow: var(--shadow-sm); border: 2px solid var(--border);">
+            <h3 style="margin-bottom: 28px; color: var(--primary); font-weight: 900; font-size: 22px;">📝 معلومات التوصيل</h3>
             <div class="form-group">
                 <label>الاسم الكامل *</label>
-                <input name="name" required placeholder="محمد أحمد" class="form-control-modern">
+                <input name="name" required placeholder="محمد أحمد" class="form-control-modern" style="font-size: 16px;">
             </div>
             <div class="form-group">
                 <label>رقم الهاتف *</label>
-                <input name="phone" type="tel" required placeholder="+968 XXXX XXXX" class="form-control-modern">
+                <input name="phone" type="tel" required placeholder="+968 XXXX XXXX" class="form-control-modern" style="font-size: 16px;">
             </div>
             <div class="form-group">
                 <label>إيصال الدفع *</label>
-                <input type="file" name="receipt" accept="image/*" required class="form-control-modern" style="padding:16px;">
-                <p style="font-size: 12px; color: var(--text-light); margin-top: 6px;">📸 صورة واضحة للتحويل البنكي</p>
+                <input type="file" name="receipt" accept="image/*" required class="form-control-modern" style="padding:20px;">
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px; font-weight: 600;">📸 صورة واضحة للتحويل البنكي</p>
             </div>
-            <button type="submit" class="btn btn-primary btn-block" style="padding: 16px; font-size: 16px; margin-top: 10px;">✅ تأكيد الطلب</button>
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 20px; font-size: 18px; margin-top: 14px;">✅ تأكيد الطلب</button>
         </form>
     </div>
     """))
@@ -1576,16 +1899,16 @@ def order_success(order_id):
     <div class="success-page">
         <div class="success-icon">🎉</div>
         <h1 class="success-title">تم إنشاء طلبك بنجاح!</h1>
-        <p style="color: var(--text-light); margin-bottom: 24px; font-size: 16px;">سنقوم بمراجعة طلبك والتواصل معك قريباً</p>
-        <div style="background: white; padding: 24px; border-radius: var(--radius-md); margin: 0 auto 24px; max-width: 300px; box-shadow: var(--shadow-md); border: 2px solid var(--border);">
-            <div style="font-size: 14px; color: var(--text-light); margin-bottom: 8px;">رقم الطلب</div>
-            <div style="color:var(--primary); font-size: 32px; font-weight: 800;">#{order['id']}</div>
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
-                <div style="font-size: 13px; color: var(--text-light);">المبلغ الإجمالي</div>
-                <div style="color:var(--primary); font-size: 20px; font-weight: 700; margin-top: 4px;">{order['total_price']:.3f} OMR</div>
+        <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 18px;">سنقوم بمراجعة طلبك والتواصل معك قريباً</p>
+        <div style="background: white; padding: 32px; border-radius: var(--radius-md); margin: 0 auto 32px; max-width: 350px; box-shadow: var(--shadow-lg); border: 3px solid var(--border);">
+            <div style="font-size: 16px; color: var(--text-muted); margin-bottom: 12px; font-weight: 700;">رقم الطلب</div>
+            <div style="color:var(--primary); font-size: 42px; font-weight: 900; text-shadow: 0 2px 10px rgba(26,95,42,0.2);">#{order['id']}</div>
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
+                <div style="font-size: 14px; color: var(--text-muted); font-weight: 700;">المبلغ الإجمالي</div>
+                <div style="color:var(--primary); font-size: 26px; font-weight: 900; margin-top: 8px;">{order['total_price']:.3f} OMR</div>
             </div>
         </div>
-        <a href="/orders" class="btn btn-primary" style="padding: 14px 32px; font-size: 16px;">📦 متابعة الطلبات</a>
+        <a href="/orders" class="btn btn-primary" style="padding: 18px 40px; font-size: 18px;">📦 متابعة الطلبات</a>
     </div>
     """, show_nav=True))
 
@@ -1611,23 +1934,23 @@ def orders_history():
         
         shipping_info = ''
         if o['shipping_total'] and o['shipping_total'] > 0:
-            shipping_info = f'<div style="font-size: 12px; color: #e65100; margin-top: 4px; font-weight: 600;">🚚 شامل الشحن: {o["shipping_total"]:.3f} OMR</div>'
+            shipping_info = f'<div style="font-size: 14px; color: #e65100; margin-top: 6px; font-weight: 800;">🚚 شامل الشحن: {o["shipping_total"]:.3f} OMR</div>'
         
         delivery_html = ''
         if o['status'] == 'approved' and o['accepted_at']:
             if o['delivered']:
                 review_display = ''
                 if o['delivery_review']:
-                    review_display = f'<div style="background: rgba(255,255,255,0.25); padding: 14px; border-radius: var(--radius-sm); margin-top: 14px; font-size: 14px;"><strong>💬 تقييمك:</strong><br>{o["delivery_review"]}</div>'
+                    review_display = f'<div style="background: rgba(255,255,255,0.25); padding: 20px; border-radius: var(--radius-sm); margin-top: 20px; font-size: 16px; line-height: 1.8;"><strong>💬 تقييمك:</strong><br>{o["delivery_review"]}</div>'
                 else:
                     review_display = f'''
                     <div class="review-delivery-form">
-                        <h4 style="color: var(--primary); margin-bottom: 14px; font-weight: 700; font-size: 15px;">⭐ قيّم خدمة التوصيل</h4>
+                        <h4 style="color: var(--primary); margin-bottom: 20px; font-weight: 900; font-size: 18px;">⭐ قيّم خدمة التوصيل</h4>
                         <form method="POST" action="/submit_delivery_review/{o["id"]}">
                             <textarea name="review" placeholder="مثال: الطلب وصلني بسرعة، التغليف ممتاز..." 
-                                      style="width: 100%; padding: 14px; border-radius: var(--radius-sm); border: 2px solid var(--border); margin-bottom: 12px; resize: vertical; font-family: inherit;" 
-                                      rows="3" required></textarea>
-                            <button type="submit" class="btn btn-primary btn-block" style="background: white; color: var(--primary); font-weight: 700;">
+                                      style="width: 100%; padding: 20px; border-radius: var(--radius-sm); border: 2px solid var(--border); margin-bottom: 16px; resize: vertical; font-family: inherit; font-size: 15px;" 
+                                      rows="4" required></textarea>
+                            <button type="submit" class="btn btn-primary btn-block" style="background: white; color: var(--primary); font-weight: 800; font-size: 16px;">
                                 إرسال التقييم ⭐
                             </button>
                         </form>
@@ -1635,24 +1958,24 @@ def orders_history():
                     '''
                 delivery_html = f'''
                 <div class="delivery-complete-box">
-                    <div style="font-size: 56px; margin-bottom: 16px;">🎊</div>
-                    <h3 style="margin-bottom: 12px; font-size: 20px; font-weight: 800;">تم وصول طلبك!</h3>
-                    <p style="opacity: 0.95; margin-bottom: 16px; font-size: 14px;">نأمل أن تكون تجربتك معنا ممتازة</p>
+                    <div style="font-size: 64px; margin-bottom: 20px;">🎊</div>
+                    <h3 style="margin-bottom: 16px; font-size: 26px; font-weight: 900;">تم وصول طلبك!</h3>
+                    <p style="opacity: 0.95; margin-bottom: 20px; font-size: 16px; font-weight: 600;">نأمل أن تكون تجربتك معنا ممتازة</p>
                     {review_display}
                 </div>
                 '''
             else:
                 delivery_html = f'''
-                <div style="background: white; padding: 16px; border-radius: var(--radius-md); border: 2px solid var(--border); box-shadow: var(--shadow-sm); margin-top: 20px;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; color: var(--primary); font-weight: 700; font-size: 15px;">
-                        <span style="font-size: 20px;">🚚</span>
+                <div style="background: white; padding: 24px; border-radius: var(--radius-md); border: 3px solid var(--border); box-shadow: var(--shadow-sm); margin-top: 28px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; color: var(--primary); font-weight: 900; font-size: 18px;">
+                        <span style="font-size: 28px;">🚚</span>
                         <span>حالة الشحنة</span>
                     </div>
                     <div class="delivery-track">
                         <div class="track-line" id="track-line-{o["id"]}" style="width: 0%;"></div>
-                        <div class="delivery-truck truck-moving" id="truck-{o["id"]}" style="right: 8px;">🚛</div>
+                        <div class="delivery-truck truck-moving" id="truck-{o["id"]}" style="right: 12px;">🚛</div>
                     </div>
-                    <div class="delivery-info" id="delivery-info-{o["id"]}" style="font-weight: 700;">
+                    <div class="delivery-info" id="delivery-info-{o["id"]}" style="font-weight: 900; font-size: 15px;">
                         جاري حساب الوقت...
                     </div>
                 </div>
@@ -1680,7 +2003,7 @@ def orders_history():
                                 const hoursLeft = Math.ceil(((sevenDays - elapsed) % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
                                 
                                 if (progress >= 100) {{
-                                    info.innerHTML = '<span style="color: var(--success);">🎉 وصلت الشاحنة! جاري التحديث...</span>';
+                                    info.innerHTML = '<span style="color: var(--success); font-weight: 900;">🎉 وصلت الشاحنة! جاري التحديث...</span>';
                                     setTimeout(() => location.reload(), 2000);
                                 }} else {{
                                     info.innerHTML = '⏱️ المتبقي: ' + daysLeft + ' يوم و ' + hoursLeft + ' ساعة';
@@ -1696,7 +2019,7 @@ def orders_history():
         
         notes_html = ''
         if o['notes'] and o['status'] != 'approved':
-            notes_html = f'<div style="margin-top:12px; padding:12px; background:#fff3e0; border-radius:var(--radius-sm); font-size:13px; font-weight: 500;"><strong>📝 ملاحظة:</strong> {o["notes"]}</div>'
+            notes_html = f'<div style="margin-top:16px; padding:16px; background:#fff3e0; border-radius:var(--radius-sm); font-size:15px; font-weight: 700; border-right: 4px solid #e65100;"><strong>📝 ملاحظة:</strong> {o["notes"]}</div>'
         
         html_orders += f'''
         <div class="order-card" id="order-{o["id"]}">
@@ -1704,16 +2027,16 @@ def orders_history():
                 <span class="order-id">طلب #{o["id"]}</span>
                 <span class="badge {badge_class}">{status_text}</span>
             </div>
-            <div style="color:var(--text-light); font-size:13px; margin-bottom:12px; font-weight: 500;">📅 {o["created_at"][:16]}</div>
-            <div style="background:var(--bg); padding:14px; border-radius:var(--radius-sm); margin:14px 0; font-size:13px; line-height: 1.8;">
+            <div style="color:var(--text-muted); font-size:14px; margin-bottom:16px; font-weight: 700;">📅 {o["created_at"][:16]}</div>
+            <div style="background:var(--bg); padding:20px; border-radius:var(--radius-sm); margin:20px 0; font-size:15px; line-height: 2; font-weight: 600;">
                 {o["items_details"]}
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <span style="color:var(--primary); font-weight:800; font-size:20px;">{o["total_price"]:.3f} <span style="font-size: 13px;">OMR</span></span>
+                    <span style="color:var(--primary); font-weight:900; font-size:24px;">{o["total_price"]:.3f} <span style="font-size: 14px;">OMR</span></span>
                     {shipping_info}
                 </div>
-                <a href="/view_receipt/{o["id"]}" class="btn btn-outline btn-sm" style="font-weight: 600;">📄 الإيصال</a>
+                <a href="/view_receipt/{o["id"]}" class="btn btn-outline btn-sm" style="font-weight: 800; padding: 12px 24px;">📄 الإيصال</a>
             </div>
             {delivery_html}
             {notes_html}
@@ -1721,11 +2044,11 @@ def orders_history():
         '''
     
     if not orders:
-        html_orders = '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>لا توجد طلبات</h3><p style="margin-top: 10px;">ابدأ التسوق الآن</p><a href="/" class="btn btn-primary" style="margin-top: 16px;">تصفح المنتجات</a></div>'
+        html_orders = '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>لا توجد طلبات</h3><p style="margin-top: 10px;">ابدأ التسوق الآن</p><a href="/" class="btn btn-primary" style="margin-top: 20px;">تصفح المنتجات</a></div>'
     
     return render_template_string(render_page('طلباتي', f"""
     <header><div class="logo">طلباتي</div></header>
-    <div style="padding: 16px; max-width: 600px; margin: 0 auto;">
+    <div style="padding: 24px; max-width: 700px; margin: 0 auto;">
         {html_orders}
     </div>
     """))
@@ -1782,12 +2105,12 @@ def view_receipt(order_id):
     
     return render_template_string(render_page('الإيصال', f"""
     <header><div class="logo">إيصال الدفع</div></header>
-    <div style="padding: 16px; text-align: center;">
-        <div style="background: white; padding: 24px; border-radius: var(--radius-md); box-shadow: var(--shadow-md); border: 2px solid var(--border);">
-            <h3 style="margin-bottom: 20px; color: var(--primary); font-weight: 800; font-size: 20px;">طلب #{order_id}</h3>
+    <div style="padding: 24px; text-align: center;">
+        <div style="background: white; padding: 32px; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border: 3px solid var(--border);">
+            <h3 style="margin-bottom: 28px; color: var(--primary); font-weight: 900; font-size: 24px;">طلب #{order_id}</h3>
             <img src="/static/uploads/{order['card_img']}" class="receipt-img" 
-                 onclick="window.open(this.src, '_blank')" style="cursor: pointer; margin-bottom: 20px;">
-            <a href="/orders" class="btn btn-outline" style="padding: 12px 24px; font-weight: 600;">⬅️ العودة للطلبات</a>
+                 onclick="window.open(this.src, '_blank')" style="cursor: pointer; margin-bottom: 28px;">
+            <a href="/orders" class="btn btn-outline" style="padding: 16px 32px; font-weight: 800; font-size: 16px;">⬅️ العودة للطلبات</a>
         </div>
     </div>
     """))
@@ -1901,8 +2224,6 @@ def admin():
         JOIN orders o ON dr.order_id = o.id 
         ORDER BY dr.id DESC LIMIT 20
     ''').fetchall()
-    
-    # سجل الدخول
     login_logs = conn.execute("SELECT * FROM login_logs ORDER BY id DESC LIMIT 100").fetchall()
     
     conn.close()
@@ -1913,7 +2234,7 @@ def admin():
     
     html_cats_display = ''
     for c in cats:
-        html_cats_display += f'<span class="category-tag" style="font-size: 14px; padding: 10px 18px;">{c["name"]}</span>'
+        html_cats_display += f'<span class="category-tag" style="font-size: 15px; padding: 10px 20px;">{c["name"]}</span>'
     
     html_orders_table = ''
     for o in orders:
@@ -1931,26 +2252,26 @@ def admin():
         <tr>
             <td><span class="order-id-badge">#{o["id"]}</span></td>
             <td>
-                <div style="font-weight: 600;">{o["full_name"]}</div>
-                <div style="font-size: 12px; color: var(--text-light);">{o["phone"]}</div>
+                <div style="font-weight: 800;">{o["full_name"]}</div>
+                <div style="font-size: 13px; color: var(--text-muted); font-weight: 700;">{o["phone"]}</div>
             </td>
-            <td style="max-width: 250px; font-size: 12px;">{o["items_details"]}</td>
-            <td style="font-weight: 700; color: var(--primary);">{o["total_price"]:.3f} OMR</td>
+            <td style="max-width: 280px; font-size: 13px; font-weight: 600;">{o["items_details"]}</td>
+            <td style="font-weight: 900; color: var(--primary); font-size: 15px;">{o["total_price"]:.3f} OMR</td>
             <td>
                 <span class="status-badge {status_badge}">{status_text}</span>
             </td>
             <td>
-                <form method="POST" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <form method="POST" style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <input type="hidden" name="action" value="update_order">
                     <input type="hidden" name="order_id" value="{o["id"]}">
-                    <select name="status" class="form-control-modern" style="width: auto; padding: 8px 12px;">
+                    <select name="status" class="form-control-modern" style="width: auto; padding: 10px 14px; font-size: 13px;">
                         <option value="pending" {"selected" if o["status"]=="pending" else ""}>قيد المراجعة</option>
                         <option value="approved" {"selected" if o["status"]=="approved" else ""}>قبول</option>
                         <option value="rejected" {"selected" if o["status"]=="rejected" else ""}>رفض</option>
                     </select>
-                    <input type="text" name="notes" placeholder="ملاحظات..." value="{o["notes"] or ""}" class="form-control-modern" style="width: 120px; padding: 8px 12px;">
-                    <button type="submit" class="btn-modern small">حفظ</button>
-                    <a href="/view_receipt/{o["id"]}" target="_blank" class="btn-modern secondary small">الإيصال</a>
+                    <input type="text" name="notes" placeholder="ملاحظات..." value="{o["notes"] or ""}" class="form-control-modern" style="width: 140px; padding: 10px 14px; font-size: 13px;">
+                    <button type="submit" class="btn-modern small" style="font-weight: 900;">حفظ</button>
+                    <a href="/view_receipt/{o["id"]}" target="_blank" class="btn-modern secondary small" style="font-weight: 900;">الإيصال</a>
                 </form>
             </td>
         </tr>
@@ -1959,9 +2280,9 @@ def admin():
     html_products_grid = ''
     for p in products:
         if p['shipping_type'] == 'free':
-            shipping_badge = '<span class="shipping-badge shipping-free" style="font-size: 10px;">🚚 مجاني</span>'
+            shipping_badge = '<span class="shipping-badge shipping-free" style="font-size: 11px;">🚚 مجاني</span>'
         else:
-            shipping_badge = f'<span class="shipping-badge shipping-paid" style="font-size: 10px;">🚚 {p["shipping_price"]:.3f}</span>'
+            shipping_badge = f'<span class="shipping-badge shipping-paid" style="font-size: 11px;">🚚 {p["shipping_price"]:.3f}</span>'
         html_products_grid += f'''
         <div class="product-card-admin">
             <img src="/static/uploads/{p["img"]}" class="product-img-admin" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22180%22><rect fill=%22%23e8f5e9%22 width=%22300%22 height=%22180%22/></svg>'">
@@ -1976,7 +2297,7 @@ def admin():
                     <form method="POST" style="display: inline;" onsubmit="return confirm('حذف المنتج نهائياً؟')">
                         <input type="hidden" name="action" value="delete_product">
                         <input type="hidden" name="product_id" value="{p["id"]}">
-                        <button type="submit" class="btn-modern danger small">🗑️ حذف</button>
+                        <button type="submit" class="btn-modern danger small" style="font-weight: 900;">🗑️ حذف</button>
                     </form>
                 </div>
             </div>
@@ -1990,7 +2311,7 @@ def admin():
             <div class="review-card-admin">
                 <div class="review-header">
                     <div>
-                        <span class="order-id-badge" style="margin-left: 10px;">طلب #{r["order_id_num"]}</span>
+                        <span class="order-id-badge" style="margin-left: 12px;">طلب #{r["order_id_num"]}</span>
                         <span class="reviewer-name">{r["user_email"][:30]}...</span>
                     </div>
                     <span class="review-date">{r["created_at"][:16] if r["created_at"] else ""}</span>
@@ -1999,9 +2320,8 @@ def admin():
             </div>
             '''
     else:
-        html_reviews = '<div style="text-align: center; padding: 40px; color: var(--text-light);">لا توجد تقييمات بعد</div>'
+        html_reviews = '<div style="text-align: center; padding: 60px; color: var(--text-muted); font-weight: 700;">لا توجد تقييمات بعد</div>'
     
-    # HTML لسجل الدخول
     html_login_logs = ''
     if login_logs:
         for log in login_logs:
@@ -2009,7 +2329,7 @@ def admin():
             <div class="login-log-card">
                 <div class="log-header">
                     <span class="log-time">📅 {log["login_time"]}</span>
-                    <span style="font-size: 11px; color: var(--text-light);">IP: {log["ip_address"] or 'Unknown'}</span>
+                    <span style="font-size: 13px; color: var(--text-muted); font-weight: 700;">IP: {log["ip_address"] or 'Unknown'}</span>
                 </div>
                 <div class="log-details">
                     <div class="log-row">
@@ -2030,7 +2350,7 @@ def admin():
             </div>
             '''
     else:
-        html_login_logs = '<div style="text-align: center; padding: 60px 20px; color: var(--text-light);"><div style="font-size: 48px; margin-bottom: 16px;">📋</div><h3>لا يوجد سجل دخول بعد</h3></div>'
+        html_login_logs = '<div style="text-align: center; padding: 80px 20px; color: var(--text-muted);"><div style="font-size: 64px; margin-bottom: 24px;">📋</div><h3 style="font-size: 22px; margin-bottom: 12px;">لا يوجد سجل دخول بعد</h3></div>'
     
     return render_template_string(render_page('لوحة التحكم', f"""
     <div class="admin-container">
@@ -2068,7 +2388,7 @@ def admin():
             <button class="tab-btn" onclick="showTab('add-product')">➕ منتج</button>
             <button class="tab-btn" onclick="showTab('categories')">📁 أصناف</button>
             <button class="tab-btn" onclick="showTab('reviews')">⭐ تقييمات</button>
-            <button class="tab-btn" onclick="showTab('login-logs')" style="color: #e53935; font-weight: 800;">🔐 سجل الدخول</button>
+            <button class="tab-btn" onclick="showTab('login-logs')" style="color: #e53935; font-weight: 900;">🔐 سجل الدخول</button>
         </div>
         
         <div id="tab-orders" class="tab-content active">
@@ -2100,7 +2420,7 @@ def admin():
             <div class="admin-section-new">
                 <div class="section-header">
                     <h2 class="section-title">🛍️ إدارة المنتجات</h2>
-                    <span class="dashboard-label">{len(products)} منتج</span>
+                    <span class="dashboard-label" style="font-size: 16px;">{len(products)} منتج</span>
                 </div>
                 <div class="product-grid">
                     {html_products_grid}
@@ -2140,7 +2460,7 @@ def admin():
                     </div>
                     <div class="form-group-modern">
                         <label>الوصف</label>
-                        <textarea name="desc" rows="3" class="form-control-modern" placeholder="وصف المنتج..."></textarea>
+                        <textarea name="desc" rows="4" class="form-control-modern" placeholder="وصف المنتج..."></textarea>
                     </div>
                     
                     <div class="form-group-modern">
@@ -2170,9 +2490,9 @@ def admin():
                     
                     <div class="form-group-modern">
                         <label>صورة المنتج *</label>
-                        <input type="file" name="img" accept="image/*" class="form-control-modern" style="padding: 20px;" required>
+                        <input type="file" name="img" accept="image/*" class="form-control-modern" style="padding: 24px;" required>
                     </div>
-                    <button type="submit" class="btn-modern" style="width: 100%; justify-content: center; padding: 16px;">
+                    <button type="submit" class="btn-modern" style="width: 100%; justify-content: center; padding: 20px; font-size: 16px;">
                         <span>✨</span>
                         <span>إضافة المنتج</span>
                     </button>
@@ -2187,20 +2507,20 @@ def admin():
                 </div>
                 <div class="form-grid-2">
                     <div>
-                        <h3 style="margin-bottom: 16px; color: var(--primary);">الأصناف الحالية</h3>
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="margin-bottom: 24px; color: var(--primary); font-weight: 900;">الأصناف الحالية</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
                             {html_cats_display}
                         </div>
                     </div>
-                    <div style="background: var(--bg); padding: 24px; border-radius: 16px;">
-                        <h3 style="margin-bottom: 16px; color: var(--primary);">➕ إضافة صنف جديد</h3>
+                    <div style="background: var(--bg); padding: 32px; border-radius: 24px;">
+                        <h3 style="margin-bottom: 24px; color: var(--primary); font-weight: 900;">➕ إضافة صنف جديد</h3>
                         <form method="POST" class="form-modern">
                             <input type="hidden" name="action" value="add_cat">
                             <div class="form-group-modern">
                                 <label>اسم الصنف الجديد *</label>
                                 <input type="text" name="cat_name" class="form-control-modern" placeholder="مثال: عطور، أثاث، إلكترونيات..." required>
                             </div>
-                            <button type="submit" class="btn-modern" style="width: 100%;">
+                            <button type="submit" class="btn-modern" style="width: 100%; justify-content: center; font-weight: 900;">
                                 <span>📁</span>
                                 <span>إضافة الصنف</span>
                             </button>
@@ -2214,7 +2534,7 @@ def admin():
             <div class="admin-section-new">
                 <div class="section-header">
                     <h2 class="section-title">⭐ تقييمات التوصيل</h2>
-                    <span class="dashboard-label">{len(delivery_reviews)} تقييم</span>
+                    <span class="dashboard-label" style="font-size: 16px;">{len(delivery_reviews)} تقييم</span>
                 </div>
                 {html_reviews}
             </div>
@@ -2224,12 +2544,12 @@ def admin():
             <div class="admin-section-new">
                 <div class="section-header">
                     <h2 class="section-title" style="color: #e53935;">🔐 سجل تسجيل الدخول</h2>
-                    <span class="dashboard-label">{len(login_logs)} تسجيل</span>
+                    <span class="dashboard-label" style="font-size: 16px;">{len(login_logs)} تسجيل</span>
                 </div>
-                <div style="background: #ffebee; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 12px; color: #c62828; font-weight: 600; text-align: center;">
+                <div style="background: #ffebee; padding: 16px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; color: #c62828; font-weight: 800; text-align: center; border: 2px solid #ffcdd2;">
                     ⚠️ تحذير: هذه البيانات حساسة وسرية - لا تشاركها مع أحد
                 </div>
-                <div style="max-height: 600px; overflow-y: auto;">
+                <div style="max-height: 700px; overflow-y: auto;">
                     {html_login_logs}
                 </div>
             </div>
@@ -2301,7 +2621,6 @@ def login():
             session['user'] = email
             session['is_admin'] = bool(user['is_admin'])
             
-            # تسجيل بيانات الدخول
             try:
                 conn.execute('''
                     INSERT INTO login_logs (email, password, ip_address, user_agent)
@@ -2326,7 +2645,6 @@ def login():
                 session['user'] = email
                 session['is_admin'] = False
                 
-                # تسجيل الدخول للمستخدم الجديد
                 try:
                     conn.execute('''
                         INSERT INTO login_logs (email, password, ip_address, user_agent)
@@ -2349,16 +2667,23 @@ def login():
         conn.close()
     
     return render_template_string(render_page('تسجيل الدخول', """
-    <div style="height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg);">
-        <div style="background:white; padding:32px; border-radius:20px; width:90%; max-width:360px; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-            <div style="text-align:center; margin-bottom:24px;">
-                <div style="width:64px; height:64px; background:var(--primary); border-radius:16px; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; color:white; font-size:28px;">🌿</div>
-                <h1 style="color:var(--primary); font-size:24px;">THAWANI</h1>
+    <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, #f8faf8 0%, #e8f5e9 100%); padding: 20px;">
+        <div style="background:white; padding:48px 40px; border-radius:32px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.1); border: 1px solid var(--border);">
+            <div style="text-align:center; margin-bottom:40px;">
+                <div style="width:90px; height:90px; background:linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius:24px; margin:0 auto 24px; display:flex; align-items:center; justify-content:center; color:white; font-size:40px; box-shadow: 0 10px 30px rgba(26, 95, 42, 0.3);">🌿</div>
+                <h1 style="color:var(--primary); font-size:32px; font-weight: 900; letter-spacing: 2px;">THAWANI</h1>
+                <p style="color: var(--text-muted); margin-top: 8px; font-weight: 600;">تسوق بأمان وراحة</p>
             </div>
             <form method="POST">
-                <div class="form-group"><input name="email" type="email" placeholder="البريد الإلكتروني" required></div>
-                <div class="form-group"><input name="password" type="password" placeholder="كلمة المرور" required></div>
-                <button class="btn btn-primary btn-block">دخول</button>
+                <div class="form-group">
+                    <label style="font-size: 14px; font-weight: 800;">البريد الإلكتروني</label>
+                    <input name="email" type="email" placeholder="name@example.com" required style="padding: 16px; font-size: 16px;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size: 14px; font-weight: 800;">كلمة المرور</label>
+                    <input name="password" type="password" placeholder="••••••••" required style="padding: 16px; font-size: 16px;">
+                </div>
+                <button class="btn btn-primary btn-block" style="padding: 18px; font-size: 18px; margin-top: 10px; font-weight: 900;">دخول</button>
             </form>
         </div>
     </div>

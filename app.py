@@ -49,7 +49,9 @@ def init_db():
             category TEXT NOT NULL,
             description TEXT,
             stock INTEGER DEFAULT 0,
-            is_active INTEGER DEFAULT 1
+            is_active INTEGER DEFAULT 1,
+            shipping_type TEXT DEFAULT 'free',
+            shipping_price REAL DEFAULT 0
         )
     ''')
     
@@ -79,6 +81,7 @@ def init_db():
             card_img TEXT NOT NULL,
             items_details TEXT NOT NULL,
             total_price REAL NOT NULL,
+            shipping_total REAL DEFAULT 0,
             status TEXT DEFAULT 'pending',
             notes TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -981,6 +984,77 @@ CSS = """
         box-shadow: 0 2px 8px rgba(255, 170, 0, 0.3);
     }
     
+    .shipping-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    
+    .shipping-free {
+        background: #e8f5e9;
+        color: var(--primary);
+    }
+    
+    .shipping-paid {
+        background: #fff3e0;
+        color: #e65100;
+    }
+    
+    .radio-group {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .radio-option {
+        flex: 1;
+        padding: 16px;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+    }
+    
+    .radio-option:hover {
+        border-color: var(--primary-light);
+    }
+    
+    .radio-option.selected {
+        border-color: var(--primary);
+        background: rgba(76, 175, 80, 0.05);
+    }
+    
+    .radio-option input {
+        display: none;
+    }
+    
+    .radio-label {
+        font-weight: 700;
+        font-size: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .radio-icon {
+        font-size: 24px;
+    }
+    
+    .shipping-price-input {
+        display: none;
+    }
+    
+    .shipping-price-input.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+    
     @media (min-width: 768px) {
         .container { grid-template-columns: repeat(3, 1fr); max-width: 900px; }
     }
@@ -1048,11 +1122,16 @@ def index():
     html_prods = ''
     if prods:
         for p in prods:
+            if p['shipping_type'] == 'free':
+                shipping_html = '<span class="shipping-badge shipping-free">🚚 مجاني</span>'
+            else:
+                shipping_html = f'<span class="shipping-badge shipping-paid">🚚 {p["shipping_price"]:.3f} OMR</span>'
             html_prods += f'''
             <div class="card">
                 <img src="/static/uploads/{p["img"]}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23e8f5e9%22 width=%22100%22 height=%22100%22/></svg>'">
                 <div class="card-body">
                     <div class="product-title">{p["name"]}</div>
+                    <div style="margin-bottom: 8px;">{shipping_html}</div>
                     <div class="price">{p["price"]:.3f} OMR</div>
                     <a href="/product/{p["id"]}" class="btn btn-primary btn-block">التفاصيل</a>
                 </div>
@@ -1103,6 +1182,11 @@ def product(id):
     revs = conn.execute("SELECT * FROM reviews WHERE product_id=? ORDER BY id DESC", (id,)).fetchall()
     conn.close()
     
+    if p['shipping_type'] == 'free':
+        shipping_html = '<span class="shipping-badge shipping-free" style="font-size: 13px; padding: 6px 12px;">🚚 شحن مجاني</span>'
+    else:
+        shipping_html = f'<span class="shipping-badge shipping-paid" style="font-size: 13px; padding: 6px 12px;">🚚 تكلفة الشحن: {p["shipping_price"]:.3f} OMR</span>'
+    
     html_revs = ''
     for r in revs:
         stars = '★' * r['rating'] + '☆' * (5 - r['rating'])
@@ -1131,6 +1215,7 @@ def product(id):
             </div>
         </div>
         <h2 style="color:var(--primary); margin-bottom:10px; font-size: 24px; font-weight: 800;">{p['name']}</h2>
+        <div style="margin-bottom: 16px;">{shipping_html}</div>
         <div class="price" style="font-size:28px; margin-bottom:16px; font-weight: 800;">{p['price']:.3f} <span style="font-size: 16px; color: var(--text-light);">OMR</span></div>
         <p style="color:var(--text-light); margin-bottom:24px; line-height: 1.8; font-size: 15px;">{p['description'] or 'لا يوجد وصف'}</p>
         <div style="display: flex; gap: 12px; margin-bottom: 30px;">
@@ -1187,22 +1272,34 @@ def add_to_cart(id):
 def cart():
     conn = get_db()
     items = conn.execute('''
-        SELECT p.id, p.name, p.price, p.img, c.quantity 
+        SELECT p.id, p.name, p.price, p.img, p.shipping_type, p.shipping_price, c.quantity 
         FROM cart c JOIN products p ON c.product_id=p.id 
         WHERE c.user_email=?
     ''', (session['user'],)).fetchall()
-    total = sum(i['price']*i['quantity'] for i in items)
+    
+    total = 0
+    shipping_total = 0
+    for i in items:
+        total += i['price'] * i['quantity']
+        if i['shipping_type'] == 'paid':
+            shipping_total += i['shipping_price'] * i['quantity']
+    
     conn.close()
     
     html_items = ''
     if items:
         for i in items:
+            if i['shipping_type'] == 'free':
+                shipping_text = '🚚 مجاني'
+            else:
+                shipping_text = f'🚚 {i["shipping_price"]:.3f} OMR'
             html_items += f'''
             <div class="cart-item">
                 <img src="/static/uploads/{i["img"]}">
                 <div style="flex:1;">
                     <div style="font-weight:700; font-size:15px; margin-bottom: 4px;">{i["name"]}</div>
                     <div style="color:var(--primary); font-size:14px; font-weight: 600;">{i["price"]:.3f} OMR × {i["quantity"]}</div>
+                    <div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">{shipping_text}</div>
                 </div>
                 <div style="text-align:left;">
                     <div style="font-weight:800; font-size: 16px; color: var(--text); margin-bottom: 8px;">{(i["price"]*i["quantity"]):.3f}</div>
@@ -1210,13 +1307,25 @@ def cart():
                 </div>
             </div>
             '''
+        
+        grand_total = total + shipping_total
+        
+        shipping_breakdown = ''
+        if shipping_total > 0:
+            shipping_breakdown = f'<div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size: 14px; color: var(--text-light);"><span>الشحن:</span><span>{shipping_total:.3f} OMR</span></div>'
+        
         checkout_html = f'''
         <div style="background:white; padding:20px; border-radius:var(--radius-md); margin-top:20px; box-shadow: var(--shadow-md); border: 2px solid var(--border);">
-            <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:20px;">
-                <span style="font-size: 16px; font-weight: 600;">الإجمالي:</span>
-                <b style="color:var(--primary); font-size:26px; font-weight: 800;">{total:.3f} <span style="font-size: 14px;">OMR</span></b>
+            <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size: 14px;">
+                <span>المجموع:</span>
+                <span style="font-weight: 700;">{total:.3f} OMR</span>
             </div>
-            <a href="/checkout" class="btn btn-primary btn-block" style="padding: 16px; font-size: 16px;">إتمام الطلب ➡️</a>
+            {shipping_breakdown}
+            <div style="border-top:2px solid var(--border); margin-top:16px; padding-top:16px; display:flex; justify-content:space-between; align-items: center;">
+                <span style="font-size: 16px; font-weight: 700;">الإجمالي:</span>
+                <b style="color:var(--primary); font-size:26px; font-weight: 800;">{grand_total:.3f} <span style="font-size: 14px;">OMR</span></b>
+            </div>
+            <a href="/checkout" class="btn btn-primary btn-block" style="padding: 16px; font-size: 16px; margin-top: 16px;">إتمام الطلب ➡️</a>
         </div>
         '''
     else:
@@ -1245,7 +1354,7 @@ def remove_from_cart(pid):
 def checkout():
     conn = get_db()
     items = conn.execute('''
-        SELECT p.name, p.price, c.quantity 
+        SELECT p.name, p.price, p.shipping_type, p.shipping_price, c.quantity 
         FROM cart c JOIN products p ON c.product_id=p.id 
         WHERE c.user_email=?
     ''', (session['user'],)).fetchall()
@@ -1254,7 +1363,14 @@ def checkout():
         conn.close()
         return redirect('/cart')
     
-    total = sum(i['price']*i['quantity'] for i in items)
+    total = 0
+    shipping_total = 0
+    for i in items:
+        total += i['price'] * i['quantity']
+        if i['shipping_type'] == 'paid':
+            shipping_total += i['shipping_price'] * i['quantity']
+    
+    grand_total = total + shipping_total
     
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -1270,9 +1386,9 @@ def checkout():
                     details = ", ".join([f"{i['name']} (x{i['quantity']})" for i in items])
                     
                     cursor = conn.execute('''
-                        INSERT INTO orders (user_email, full_name, phone, card_img, items_details, total_price)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (session['user'], name, phone, filename, details, total))
+                        INSERT INTO orders (user_email, full_name, phone, card_img, items_details, total_price, shipping_total)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ''', (session['user'], name, phone, filename, details, grand_total, shipping_total))
                     
                     order_id = cursor.lastrowid
                     conn.execute("DELETE FROM cart WHERE user_email=?", (session['user'],))
@@ -1297,7 +1413,13 @@ def checkout():
     
     html_items = ''
     for i in items:
+        item_shipping = 0 if i['shipping_type'] == 'free' else i['shipping_price'] * i['quantity']
+        shipping_text = 'مجاني' if i['shipping_type'] == 'free' else f'{item_shipping:.3f} OMR'
         html_items += f'<div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; padding: 8px 0; border-bottom: 1px solid var(--bg);"><span style="font-weight: 500;">{i["name"]} <span style="color: var(--primary); font-weight: 700;">×{i["quantity"]}</span></span><span style="font-weight: 700;">{(i["price"]*i["quantity"]):.3f}</span></div>'
+    
+    shipping_breakdown = ''
+    if shipping_total > 0:
+        shipping_breakdown = f'<div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top: 1px dashed var(--border);"><span style="font-size: 14px; color: var(--text-light);">تكلفة الشحن:</span><span style="font-weight: 700; color: #e65100;">{shipping_total:.3f} OMR</span></div>'
     
     return render_template_string(render_page('إتمام الطلب', f"""
     <header><div class="logo">إتمام الطلب</div></header>
@@ -1305,9 +1427,10 @@ def checkout():
         <div style="background:white; padding:20px; border-radius:var(--radius-md); margin-bottom:16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border);">
             <h3 style="margin-bottom:16px; color:var(--primary); font-weight: 700; font-size: 18px;">📋 ملخص الطلب</h3>
             {html_items}
+            {shipping_breakdown}
             <div style="border-top:2px solid var(--border); margin-top:16px; padding-top:16px; display:flex; justify-content:space-between; align-items: center;">
                 <span style="font-weight: 700; font-size: 16px;">الإجمالي</span>
-                <span style="color:var(--primary); font-size:24px; font-weight: 800;">{total:.3f} <span style="font-size: 14px;">OMR</span></span>
+                <span style="color:var(--primary); font-size:24px; font-weight: 800;">{grand_total:.3f} <span style="font-size: 14px;">OMR</span></span>
             </div>
         </div>
         
@@ -1350,6 +1473,10 @@ def order_success(order_id):
         <div style="background: white; padding: 24px; border-radius: var(--radius-md); margin: 0 auto 24px; max-width: 300px; box-shadow: var(--shadow-md); border: 2px solid var(--border);">
             <div style="font-size: 14px; color: var(--text-light); margin-bottom: 8px;">رقم الطلب</div>
             <div style="color:var(--primary); font-size: 32px; font-weight: 800;">#{order['id']}</div>
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+                <div style="font-size: 13px; color: var(--text-light);">المبلغ الإجمالي</div>
+                <div style="color:var(--primary); font-size: 20px; font-weight: 700; margin-top: 4px;">{order['total_price']:.3f} OMR</div>
+            </div>
         </div>
         <a href="/orders" class="btn btn-primary" style="padding: 14px 32px; font-size: 16px;">📦 متابعة الطلبات</a>
     </div>
@@ -1374,6 +1501,10 @@ def orders_history():
         else:
             status_text = '❌ مرفوض'
             badge_class = 'badge-rejected'
+        
+        shipping_info = ''
+        if o['shipping_total'] and o['shipping_total'] > 0:
+            shipping_info = f'<div style="font-size: 12px; color: #e65100; margin-top: 4px; font-weight: 600;">🚚 شامل الشحن: {o["shipping_total"]:.3f} OMR</div>'
         
         delivery_html = ''
         if o['status'] == 'approved' and o['accepted_at']:
@@ -1471,7 +1602,10 @@ def orders_history():
                 {o["items_details"]}
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:var(--primary); font-weight:800; font-size:20px;">{o["total_price"]:.3f} <span style="font-size: 13px;">OMR</span></span>
+                <div>
+                    <span style="color:var(--primary); font-weight:800; font-size:20px;">{o["total_price"]:.3f} <span style="font-size: 13px;">OMR</span></span>
+                    {shipping_info}
+                </div>
                 <a href="/view_receipt/{o["id"]}" class="btn btn-outline btn-sm" style="font-weight: 600;">📄 الإيصال</a>
             </div>
             {delivery_html}
@@ -1566,14 +1700,19 @@ def admin():
             cat = request.form.get('cat', '').strip()
             stock = request.form.get('stock', type=int, default=0)
             img = request.files.get('img')
+            shipping_type = request.form.get('shipping_type', 'free')
+            shipping_price = request.form.get('shipping_price', type=float, default=0)
+            
+            if shipping_type == 'free':
+                shipping_price = 0
             
             if name and price and cat and img:
                 filename = save_upload(img)
                 if filename:
                     conn.execute('''
-                        INSERT INTO products (name, price, img, category, description, stock)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (name, price, filename, cat, request.form.get('desc', ''), stock))
+                        INSERT INTO products (name, price, img, category, description, stock, shipping_type, shipping_price)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (name, price, filename, cat, request.form.get('desc', ''), stock, shipping_type, shipping_price))
                     conn.commit()
                     if 'flash_messages' not in session:
                         session['flash_messages'] = []
@@ -1708,6 +1847,10 @@ def admin():
     
     html_products_grid = ''
     for p in products:
+        if p['shipping_type'] == 'free':
+            shipping_badge = '<span class="shipping-badge shipping-free" style="font-size: 10px;">🚚 مجاني</span>'
+        else:
+            shipping_badge = f'<span class="shipping-badge shipping-paid" style="font-size: 10px;">🚚 {p["shipping_price"]:.3f}</span>'
         html_products_grid += f'''
         <div class="product-card-admin">
             <img src="/static/uploads/{p["img"]}" class="product-img-admin" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22180%22><rect fill=%22%23e8f5e9%22 width=%22300%22 height=%22180%22/></svg>'">
@@ -1715,7 +1858,7 @@ def admin():
                 <div class="product-name-admin">{p["name"]}</div>
                 <div class="product-meta-admin">
                     <span class="category-tag">{p["category"]}</span>
-                    <span>مخزون: {p["stock"]}</span>
+                    {shipping_badge}
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span class="product-price-admin">{p["price"]:.3f} OMR</span>
@@ -1856,6 +1999,32 @@ def admin():
                         <label>الوصف</label>
                         <textarea name="desc" rows="3" class="form-control-modern" placeholder="وصف المنتج..."></textarea>
                     </div>
+                    
+                    <div class="form-group-modern">
+                        <label>نوع الشحن *</label>
+                        <div class="radio-group">
+                            <label class="radio-option selected" onclick="selectShipping('free')">
+                                <input type="radio" name="shipping_type" value="free" checked onchange="toggleShippingPrice()">
+                                <span class="radio-label">
+                                    <span class="radio-icon">🚚</span>
+                                    <span>شحن مجاني</span>
+                                </span>
+                            </label>
+                            <label class="radio-option" onclick="selectShipping('paid')">
+                                <input type="radio" name="shipping_type" value="paid" onchange="toggleShippingPrice()">
+                                <span class="radio-label">
+                                    <span class="radio-icon">💰</span>
+                                    <span>تكلفة شحن</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group-modern shipping-price-input" id="shipping-price-container">
+                        <label>سعر الشحن *</label>
+                        <input type="number" name="shipping_price" step="0.001" class="form-control-modern" placeholder="0.000" id="shipping-price-input">
+                    </div>
+                    
                     <div class="form-group-modern">
                         <label>صورة المنتج *</label>
                         <input type="file" name="img" accept="image/*" class="form-control-modern" style="padding: 20px;" required>
@@ -1919,6 +2088,28 @@ def admin():
             }});
             document.getElementById('tab-' + tabName).classList.add('active');
             event.target.classList.add('active');
+        }}
+        
+        function selectShipping(type) {{
+            document.querySelectorAll('.radio-option').forEach(opt => {{
+                opt.classList.remove('selected');
+            }});
+            event.currentTarget.classList.add('selected');
+        }}
+        
+        function toggleShippingPrice() {{
+            const container = document.getElementById('shipping-price-container');
+            const input = document.getElementById('shipping-price-input');
+            const selectedValue = document.querySelector('input[name="shipping_type"]:checked').value;
+            
+            if (selectedValue === 'paid') {{
+                container.classList.add('show');
+                input.setAttribute('required', 'required');
+            }} else {{
+                container.classList.remove('show');
+                input.removeAttribute('required');
+                input.value = '';
+            }}
         }}
     </script>
     """, show_nav=True))

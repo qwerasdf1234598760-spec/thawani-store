@@ -565,6 +565,390 @@ CSS = """
         to { transform: translateY(-50%) translateY(-5px); }
     }
     
+    .admin-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+    
+    .admin-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 40px rgba(27, 94, 32, 0.3);
+    }
+    
+    .admin-header h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+    
+    .admin-header p {
+        opacity: 0.9;
+        font-size: 14px;
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .dashboard-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border: 1px solid var(--border);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    
+    .dashboard-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 12px;
+    }
+    
+    .dashboard-card.primary .dashboard-icon { background: #e8f5e9; }
+    .dashboard-card.warning .dashboard-icon { background: #fff3e0; }
+    .dashboard-card.success .dashboard-icon { background: #e8f5e9; }
+    .dashboard-card.info .dashboard-icon { background: #e3f2fd; }
+    
+    .dashboard-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 4px;
+    }
+    
+    .dashboard-label {
+        color: var(--text-light);
+        font-size: 13px;
+    }
+    
+    .admin-section-new {
+        background: white;
+        border-radius: 20px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        border: 1px solid var(--border);
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--bg);
+    }
+    
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .btn-modern {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(27, 94, 32, 0.3);
+    }
+    
+    .btn-modern.secondary {
+        background: white;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+    
+    .btn-modern.secondary:hover {
+        background: var(--bg);
+    }
+    
+    .btn-modern.danger {
+        background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+    }
+    
+    .btn-modern.small {
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+    
+    .orders-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 14px;
+    }
+    
+    .orders-table th {
+        background: var(--bg);
+        color: var(--primary);
+        font-weight: 600;
+        padding: 16px;
+        text-align: right;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .orders-table th:first-child { border-radius: 0 12px 12px 0; }
+    .orders-table th:last-child { border-radius: 12px 0 0 12px; }
+    
+    .orders-table td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+    
+    .orders-table tr:hover td {
+        background: #f9f9f9;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    
+    .status-pending { background: #fff3e0; color: #e65100; }
+    .status-approved { background: #e8f5e9; color: #2e7d32; }
+    .status-rejected { background: #ffebee; color: #c62828; }
+    
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    
+    .product-card-admin {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        transition: all 0.3s;
+    }
+    
+    .product-card-admin:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transform: translateY(-3px);
+    }
+    
+    .product-img-admin {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+    
+    .product-info-admin {
+        padding: 16px;
+    }
+    
+    .product-name-admin {
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 8px;
+        color: var(--text);
+    }
+    
+    .product-meta-admin {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-light);
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+    
+    .product-price-admin {
+        color: var(--primary);
+        font-weight: 700;
+        font-size: 18px;
+    }
+    
+    .form-modern {
+        display: grid;
+        gap: 20px;
+    }
+    
+    .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .form-group-modern {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .form-group-modern label {
+        font-weight: 600;
+        color: var(--text);
+        font-size: 14px;
+    }
+    
+    .form-control-modern {
+        padding: 14px 16px;
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        font-size: 14px;
+        transition: all 0.2s;
+        background: white;
+    }
+    
+    .form-control-modern:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+    }
+    
+    .tabs-container {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        border-bottom: 2px solid var(--border);
+        padding-bottom: 0;
+    }
+    
+    .tab-btn {
+        padding: 12px 24px;
+        background: none;
+        border: none;
+        color: var(--text-light);
+        font-weight: 600;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+        font-size: 14px;
+    }
+    
+    .tab-btn.active {
+        color: var(--primary);
+    }
+    
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary);
+        border-radius: 3px 3px 0 0;
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .category-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: var(--bg);
+        border-radius: 20px;
+        font-size: 13px;
+        color: var(--primary);
+        font-weight: 500;
+    }
+    
+    .review-card-admin {
+        background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border-right: 4px solid var(--primary);
+    }
+    
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    
+    .reviewer-name {
+        font-weight: 600;
+        color: var(--primary);
+    }
+    
+    .review-date {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+    
+    .review-text {
+        color: var(--text);
+        line-height: 1.6;
+        font-size: 14px;
+    }
+    
+    .order-id-badge {
+        background: var(--primary);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 13px;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+        .form-grid-2 { grid-template-columns: 1fr; }
+        .admin-container { padding: 16px; }
+        .orders-table { font-size: 12px; }
+        .orders-table th, .orders-table td { padding: 12px 8px; }
+    }
+    
     @media (min-width: 768px) {
         .container { grid-template-columns: repeat(3, 1fr); max-width: 900px; }
     }
@@ -978,7 +1362,7 @@ def orders_history():
                                     info.innerHTML = '<span style="color: var(--success); font-weight: 600;">🎉 وصلت الشاحنة! جاري تحديث الصفحة...</span>';
                                     setTimeout(() => location.reload(), 2000);
                                 }} else {{
-                                    info.innerHTML = `الوقت المتبقي: ${{daysLeft}} يوم و ${{hoursLeft}} ساعة`;
+                                    info.innerHTML = 'الوقت المتبقي: ' + daysLeft + ' يوم و ' + hoursLeft + ' ساعة';
                                 }}
                             }}
                         }}
@@ -1083,6 +1467,13 @@ def admin():
                         VALUES (?, ?, ?, ?, ?, ?)
                     ''', (name, price, filename, cat, request.form.get('desc', ''), stock))
                     conn.commit()
+                    if 'flash_messages' not in session:
+                        session['flash_messages'] = []
+                    session['flash_messages'].append({
+                        'text': f'✅ تم إضافة المنتج "{name}" بنجاح!',
+                        'type': 'success'
+                    })
+                    session.modified = True
         
         elif action == 'add_cat':
             name = request.form.get('cat_name', '').strip()
@@ -1090,8 +1481,21 @@ def admin():
                 try:
                     conn.execute("INSERT INTO categories (name) VALUES (?)", (name,))
                     conn.commit()
+                    if 'flash_messages' not in session:
+                        session['flash_messages'] = []
+                    session['flash_messages'].append({
+                        'text': f'✅ تم إضافة الصنف "{name}" بنجاح!',
+                        'type': 'success'
+                    })
+                    session.modified = True
                 except:
-                    pass
+                    if 'flash_messages' not in session:
+                        session['flash_messages'] = []
+                    session['flash_messages'].append({
+                        'text': '❌ الصنف موجود مسبقاً!',
+                        'type': 'error'
+                    })
+                    session.modified = True
         
         elif action == 'update_order':
             oid = request.form.get('order_id', type=int)
@@ -1104,12 +1508,28 @@ def admin():
                 else:
                     conn.execute("UPDATE orders SET status=?, notes=? WHERE id=?", (status, notes, oid))
                 conn.commit()
+                if 'flash_messages' not in session:
+                    session['flash_messages'] = []
+                session['flash_messages'].append({
+                    'text': f'✅ تم تحديث حالة الطلب #{oid}!',
+                    'type': 'success'
+                })
+                session.modified = True
         
         elif action == 'delete_product':
             pid = request.form.get('product_id', type=int)
             if pid:
                 conn.execute("DELETE FROM products WHERE id=?", (pid,))
                 conn.commit()
+                if 'flash_messages' not in session:
+                    session['flash_messages'] = []
+                session['flash_messages'].append({
+                    'text': '🗑️ تم حذف المنتج بنجاح!',
+                    'type': 'warning'
+                })
+                session.modified = True
+        
+        return redirect('/admin')
     
     stats = {
         'users': conn.execute("SELECT COUNT(*) FROM users").fetchone()[0],
@@ -1118,129 +1538,252 @@ def admin():
         'pending': conn.execute("SELECT COUNT(*) FROM orders WHERE status='pending'").fetchone()[0]
     }
     
-    orders = conn.execute("SELECT * FROM orders ORDER BY id DESC").fetchall()
+    orders = conn.execute("SELECT * FROM orders ORDER BY id DESC LIMIT 50").fetchall()
     cats = conn.execute("SELECT * FROM categories").fetchall()
     products = conn.execute("SELECT * FROM products WHERE is_active=1 ORDER BY id DESC").fetchall()
     delivery_reviews = conn.execute('''
         SELECT dr.*, o.id as order_id_num 
         FROM delivery_reviews dr 
         JOIN orders o ON dr.order_id = o.id 
-        ORDER BY dr.id DESC
+        ORDER BY dr.id DESC LIMIT 20
     ''').fetchall()
     conn.close()
     
     return render_template_string(render_page('لوحة التحكم', f"""
-    <header><div class="logo">لوحة التحكم</div></header>
-    <div style="padding: 16px; max-width: 900px; margin: 0 auto;">
-        
-        <div class="stats-grid">
-            <div class="stat-card"><div class="stat-number">{stats['users']}</div><div class="stat-label">المستخدمين</div></div>
-            <div class="stat-card"><div class="stat-number">{stats['orders']}</div><div class="stat-label">الطلبات</div></div>
-            <div class="stat-card"><div class="stat-number">{stats['products']}</div><div class="stat-label">المنتجات</div></div>
-            <div class="stat-card"><div class="stat-number">{stats['pending']}</div><div class="stat-label">بانتظار</div></div>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>⚙️ لوحة التحكم</h1>
+            <p>إدارة المتجر والطلبات والمنتجات</p>
         </div>
         
-        <div class="admin-section">
-            <h3>📦 الطلبات</h3>
-            {''.join([f'''
-            <div style="background:var(--bg); padding:12px; border-radius:12px; margin-bottom:10px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                    <b>#{o["id"]} - {o["full_name"]}</b>
-                    <span class="badge {"badge-pending" if o["status"]=="pending" else "badge-approved" if o["status"]=="approved" else "badge-rejected"}">{o["status"]}</span>
+        <div class="dashboard-grid">
+            <div class="dashboard-card primary">
+                <div class="dashboard-icon">👥</div>
+                <div class="dashboard-number">{stats['users']}</div>
+                <div class="dashboard-label">المستخدمين</div>
+            </div>
+            <div class="dashboard-card warning">
+                <div class="dashboard-icon">📦</div>
+                <div class="dashboard-number">{stats['orders']}</div>
+                <div class="dashboard-label">إجمالي الطلبات</div>
+            </div>
+            <div class="dashboard-card success">
+                <div class="dashboard-icon">🛍️</div>
+                <div class="dashboard-number">{stats['products']}</div>
+                <div class="dashboard-label">المنتجات النشطة</div>
+            </div>
+            <div class="dashboard-card info">
+                <div class="dashboard-icon">⏳</div>
+                <div class="dashboard-number">{stats['pending']}</div>
+                <div class="dashboard-label">طلبات بانتظار</div>
+            </div>
+        </div>
+        
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="showTab('orders')">📋 الطلبات</button>
+            <button class="tab-btn" onclick="showTab('products')">🛍️ المنتجات</button>
+            <button class="tab-btn" onclick="showTab('add-product')">➕ إضافة منتج</button>
+            <button class="tab-btn" onclick="showTab('categories')">📁 الأصناف</button>
+            <button class="tab-btn" onclick="showTab('reviews')">⭐ تقييمات التوصيل</button>
+        </div>
+        
+        <div id="tab-orders" class="tab-content active">
+            <div class="admin-section-new">
+                <div class="section-header">
+                    <h2 class="section-title">📋 إدارة الطلبات</h2>
                 </div>
-                <div style="font-size:12px; color:var(--text-light); margin-bottom:8px;">{o["items_details"]}</div>
-                <div style="font-size:12px; margin-bottom:8px;">{o["total_price"]:.3f} OMR | {o["phone"]}</div>
-                <a href="/view_receipt/{o["id"]}" target="_blank" class="btn btn-sm btn-outline">الإيصال</a>
-                <form method="POST" style="margin-top:8px; display:flex; gap:8px;">
-                    <input type="hidden" name="action" value="update_order">
-                    <input type="hidden" name="order_id" value="{o["id"]}">
-                    <select name="status" class="btn btn-outline" style="flex:1; padding:6px;">
-                        <option value="pending" {"selected" if o["status"]=="pending" else ""}>قيد المراجعة</option>
-                        <option value="approved" {"selected" if o["status"]=="approved" else ""}>قبول</option>
-                        <option value="rejected" {"selected" if o["status"]=="rejected" else ""}>رفض</option>
-                    </select>
-                    <input type="text" name="notes" placeholder="ملاحظات" value="{o["notes"] or ""}" style="flex:2;">
-                    <button class="btn btn-primary btn-sm">حفظ</button>
+                <div style="overflow-x: auto;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>العميل</th>
+                                <th>المنتجات</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {''.join([f'''
+                            <tr>
+                                <td><span class="order-id-badge">#{o["id"]}</span></td>
+                                <td>
+                                    <div style="font-weight: 600;">{o["full_name"]}</div>
+                                    <div style="font-size: 12px; color: var(--text-light);">{o["phone"]}</div>
+                                </td>
+                                <td style="max-width: 250px; font-size: 12px;">{o["items_details"]}</td>
+                                <td style="font-weight: 700; color: var(--primary);">{o["total_price"]:.3f} OMR</td>
+                                <td>
+                                    <span class="status-badge status-{o['status']}">
+                                        {"⏳" if o["status"]=="pending" else "✅" if o["status"]=="approved" else "❌"} 
+                                        {"قيد المراجعة" if o["status"]=="pending" else "تم القبول" if o["status"]=="approved" else "مرفوض"}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="POST" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                        <input type="hidden" name="action" value="update_order">
+                                        <input type="hidden" name="order_id" value="{o["id"]}">
+                                        <select name="status" class="form-control-modern" style="width: auto; padding: 8px 12px;">
+                                            <option value="pending" {"selected" if o["status"]=="pending" else ""}>قيد المراجعة</option>
+                                            <option value="approved" {"selected" if o["status"]=="approved" else ""}>قبول</option>
+                                            <option value="rejected" {"selected" if o["status"]=="rejected" else ""}>رفض</option>
+                                        </select>
+                                        <input type="text" name="notes" placeholder="ملاحظات..." value="{o["notes"] or ""}" class="form-control-modern" style="width: 120px; padding: 8px 12px;">
+                                        <button type="submit" class="btn-modern small">حفظ</button>
+                                        <a href="/view_receipt/{o["id"]}" target="_blank" class="btn-modern secondary small">الإيصال</a>
+                                    </form>
+                                </td>
+                            </tr>
+                            ''' for o in orders])}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tab-products" class="tab-content">
+            <div class="admin-section-new">
+                <div class="section-header">
+                    <h2 class="section-title">🛍️ إدارة المنتجات</h2>
+                    <span class="dashboard-label">{len(products)} منتج</span>
+                </div>
+                <div class="product-grid">
+                    {''.join([f'''
+                    <div class="product-card-admin">
+                        <img src="/static/uploads/{p["img"]}" class="product-img-admin" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22180%22><rect fill=%22%23e8f5e9%22 width=%22300%22 height=%22180%22/></svg>'">
+                        <div class="product-info-admin">
+                            <div class="product-name-admin">{p["name"]}</div>
+                            <div class="product-meta-admin">
+                                <span class="category-tag">{p["category"]}</span>
+                                <span>مخزون: {p["stock"]}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="product-price-admin">{p["price"]:.3f} OMR</span>
+                                <form method="POST" style="display: inline;" onsubmit="return confirm('حذف المنتج نهائياً؟')">
+                                    <input type="hidden" name="action" value="delete_product">
+                                    <input type="hidden" name="product_id" value="{p["id"]}">
+                                    <button type="submit" class="btn-modern danger small">🗑️ حذف</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    ''' for p in products])}
+                </div>
+            </div>
+        </div>
+        
+        <div id="tab-add-product" class="tab-content">
+            <div class="admin-section-new">
+                <div class="section-header">
+                    <h2 class="section-title">➕ إضافة منتج جديد</h2>
+                </div>
+                <form method="POST" enctype="multipart/form-data" class="form-modern">
+                    <input type="hidden" name="action" value="add_product">
+                    <div class="form-grid-2">
+                        <div class="form-group-modern">
+                            <label>اسم المنتج *</label>
+                            <input type="text" name="name" class="form-control-modern" placeholder="مثال: عطر مسك الطهارة" required>
+                        </div>
+                        <div class="form-group-modern">
+                            <label>السعر *</label>
+                            <input type="number" name="price" step="0.001" class="form-control-modern" placeholder="0.000" required>
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group-modern">
+                            <label>الصنف *</label>
+                            <select name="cat" class="form-control-modern" required>
+                                <option value="">اختر الصنف...</option>
+                                {''.join([f'<option value="{c["name"]}">{c["name"]}</option>' for c in cats])}
+                            </select>
+                        </div>
+                        <div class="form-group-modern">
+                            <label>المخزون</label>
+                            <input type="number" name="stock" value="0" class="form-control-modern">
+                        </div>
+                    </div>
+                    <div class="form-group-modern">
+                        <label>الوصف</label>
+                        <textarea name="desc" rows="3" class="form-control-modern" placeholder="وصف المنتج..."></textarea>
+                    </div>
+                    <div class="form-group-modern">
+                        <label>صورة المنتج *</label>
+                        <input type="file" name="img" accept="image/*" class="form-control-modern" style="padding: 20px;" required>
+                    </div>
+                    <button type="submit" class="btn-modern" style="width: 100%; justify-content: center; padding: 16px;">
+                        <span>✨</span>
+                        <span>إضافة المنتج</span>
+                    </button>
                 </form>
             </div>
-            ''' for o in orders[:20]])}
         </div>
         
-        <div class="admin-section">
-            <h3>➕ منتج جديد</h3>
-            <form method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="action" value="add_product">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                    <div class="form-group"><label>الاسم</label><input name="name" required></div>
-                    <div class="form-group"><label>السعر</label><input name="price" type="number" step="0.001" required></div>
+        <div id="tab-categories" class="tab-content">
+            <div class="admin-section-new">
+                <div class="section-header">
+                    <h2 class="section-title">📁 إدارة الأصناف</h2>
                 </div>
-                <div class="form-group">
-                    <label>القسم</label>
-                    <select name="cat" required><option value=""></option>{''.join([f'<option value="{c["name"]}">{c["name"]}</option>' for c in cats])}</select>
+                <div class="form-grid-2">
+                    <div>
+                        <h3 style="margin-bottom: 16px; color: var(--primary);">الأصناف الحالية</h3>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            {''.join([f'<span class="category-tag" style="font-size: 14px; padding: 10px 18px;">{c["name"]}</span>' for c in cats])}
+                        </div>
+                    </div>
+                    <div style="background: var(--bg); padding: 24px; border-radius: 16px;">
+                        <h3 style="margin-bottom: 16px; color: var(--primary);">➕ إضافة صنف جديد</h3>
+                        <form method="POST" class="form-modern">
+                            <input type="hidden" name="action" value="add_cat">
+                            <div class="form-group-modern">
+                                <label>اسم الصنف الجديد *</label>
+                                <input type="text" name="cat_name" class="form-control-modern" placeholder="مثال: عطور، أثاث، إلكترونيات..." required>
+                            </div>
+                            <button type="submit" class="btn-modern" style="width: 100%;">
+                                <span>📁</span>
+                                <span>إضافة الصنف</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <div class="form-group"><label>الوصف</label><textarea name="desc" rows="2"></textarea></div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                    <div class="form-group"><label>المخزون</label><input name="stock" type="number" value="0"></div>
-                    <div class="form-group"><label>الصورة</label><input type="file" name="img" accept="image/*" required></div>
-                </div>
-                <button class="btn btn-primary btn-block">إضافة</button>
-            </form>
-        </div>
-        
-        <div class="admin-section">
-            <h3>📁 قسم جديد</h3>
-            <form method="POST">
-                <input type="hidden" name="action" value="add_cat">
-                <div style="display:flex; gap:8px;">
-                    <input name="cat_name" placeholder="اسم القسم" required style="flex:1;">
-                    <button class="btn btn-primary">إضافة</button>
-                </div>
-            </form>
-        </div>
-        
-        <div class="admin-section">
-            <h3>🛍️ المنتجات</h3>
-            <div style="overflow-x:auto;">
-                <table>
-                    <tr><th>الصورة</th><th>الاسم</th><th>السعر</th><th>المخزون</th><th>حذف</th></tr>
-                    {''.join([f'''
-                    <tr>
-                        <td><img src="/static/uploads/{p["img"]}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;"></td>
-                        <td>{p["name"]}</td>
-                        <td>{p["price"]:.3f}</td>
-                        <td>{p["stock"]}</td>
-                        <td>
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('حذف المنتج نهائياً؟')">
-                                <input type="hidden" name="action" value="delete_product">
-                                <input type="hidden" name="product_id" value="{p["id"]}">
-                                <button type="submit" class="btn btn-danger btn-sm">🗑️ حذف</button>
-                            </form>
-                        </td>
-                    </tr>
-                    ''' for p in products])}
-                </table>
             </div>
         </div>
         
-        <div class="admin-section">
-            <h3>⭐ تقييمات التوصيل</h3>
-            {''.join([f'''
-            <div style="background:var(--bg); padding:12px; border-radius:12px; margin-bottom:10px; border-right: 4px solid var(--primary);">
-                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <b style="color:var(--primary);">طلب #{r["order_id_num"]}</b>
-                    <span style="font-size:11px; color:var(--text-light);">{r["created_at"][:16] if r["created_at"] else ''}</span>
+        <div id="tab-reviews" class="tab-content">
+            <div class="admin-section-new">
+                <div class="section-header">
+                    <h2 class="section-title">⭐ تقييمات التوصيل</h2>
+                    <span class="dashboard-label">{len(delivery_reviews)} تقييم</span>
                 </div>
-                <div style="font-size:13px; margin-bottom:6px; color:var(--text);">
-                    {r["review"]}
+                {''.join([f'''
+                <div class="review-card-admin">
+                    <div class="review-header">
+                        <div>
+                            <span class="order-id-badge" style="margin-left: 10px;">طلب #{r["order_id_num"]}</span>
+                            <span class="reviewer-name">{r["user_email"][:30]}...</span>
+                        </div>
+                        <span class="review-date">{r["created_at"][:16] if r["created_at"] else ''}</span>
+                    </div>
+                    <div class="review-text">{r["review"]}</div>
                 </div>
-                <div style="font-size:11px; color:var(--text-light);">
-                    بواسطة: {r["user_email"][:25]}...
-                </div>
+                ''' for r in delivery_reviews]) if delivery_reviews else '<div style="text-align: center; padding: 40px; color: var(--text-light);">لا توجد تقييمات بعد</div>'}
             </div>
-            ''' for r in delivery_reviews]) if delivery_reviews else '<div style="text-align:center; color:var(--text-light); padding:20px;">لا توجد تقييمات بعد</div>'}
         </div>
     </div>
-    """))
+    
+    <script>
+        function showTab(tabName) {{
+            document.querySelectorAll('.tab-content').forEach(tab => {{
+                tab.classList.remove('active');
+            }});
+            document.querySelectorAll('.tab-btn').forEach(btn => {{
+                btn.classList.remove('active');
+            }});
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+        }}
+    </script>
+    """, show_nav=True))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -1283,4 +1826,17 @@ def login():
             <form method="POST">
                 <div class="form-group"><input name="email" type="email" placeholder="البريد الإلكتروني" required></div>
                 <div class="form-group"><input name="password" type="password" placeholder="كلمة المرور" required></div>
-                <button class="btn b
+                <button class="btn btn-primary btn-block">دخول</button>
+            </form>
+        </div>
+    </div>
+    """, show_nav=False))
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000, debug=False)
+

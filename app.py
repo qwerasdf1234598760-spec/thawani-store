@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string, redirect, session, url_for, flash, abort
+from flask import Flask, request, render_template_string, redirect, session, url_for, flash, abort, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from functools import wraps
@@ -7,6 +7,7 @@ import sqlite3
 import uuid
 import re
 import logging
+from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -15,12 +16,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(32).hex())
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-RENDER_DISK = os.environ.get('RENDER_DISK_PATH', '/opt/render/project/src')
-if os.path.exists(RENDER_DISK):
-    DATA_DIR = os.path.join(RENDER_DISK, 'data')
-else:
-    DATA_DIR = BASE_DIR
-
+DATA_DIR = os.path.join(BASE_DIR, 'data')
 os.makedirs(DATA_DIR, exist_ok=True)
 UPLOAD_FOLDER = os.path.join(DATA_DIR, 'static', 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -48,11 +44,15 @@ def init_db():
         )
     ''')
     
+    # ✅ تعديل جدول المنتجات لإضافة خصائص الخصم
     c.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             price REAL NOT NULL,
+            original_price REAL,
+            discount_price REAL,
+            discount_end_date TIMESTAMP,
             img TEXT NOT NULL,
             category TEXT NOT NULL,
             description TEXT,
@@ -132,6 +132,21 @@ def init_db():
         )
     ''')
     
+    # ✅ جدول الإشعارات الجديد
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            type TEXT NOT NULL,
+            is_read INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            link TEXT,
+            related_id INTEGER
+        )
+    ''')
+    
     ADMIN_EMAIL = "qwerasdf1234598760@gmail.com"
     ADMIN_PASS = "qaws54321"
     
@@ -185,7 +200,46 @@ def save_upload(file):
     file.save(filepath)
     return filename
 
-# ✨ CSS محسّن بحجم أصغر للجوال + تصميم فاخر
+# ✅ دالة إنشاء إشعار جديد
+def create_notification(user_email, title, message, notif_type, link=None, related_id=None):
+    conn = get_db()
+    try:
+        conn.execute('''
+            INSERT INTO notifications (user_email, title, message, type, link, related_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (user_email, title, message, notif_type, link, related_id))
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Error creating notification: {e}")
+    finally:
+        conn.close()
+
+# ✅ دالة إرسال إشعار لجميع المستخدمين
+def notify_all_users(title, message, notif_type, link=None, related_id=None):
+    conn = get_db()
+    try:
+        users = conn.execute("SELECT email FROM users").fetchall()
+        for user in users:
+            create_notification(user['email'], title, message, notif_type, link, related_id)
+    except Exception as e:
+        logger.error(f"Error notifying all users: {e}")
+    finally:
+        conn.close()
+
+# ✅ دالة جلب عدد الإشعارات غير المقروءة
+def get_unread_count(user_email):
+    conn = get_db()
+    try:
+        count = conn.execute(
+            "SELECT COUNT(*) FROM notifications WHERE user_email=? AND is_read=0", 
+            (user_email,)
+        ).fetchone()[0]
+        return count
+    except:
+        return 0
+    finally:
+        conn.close()
+
 CSS = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
@@ -262,7 +316,7 @@ CSS = """
     .flash.error { background: var(--error); color: white; }
     .flash.warning { background: var(--warning); color: white; }
     
-    /* Header أصغر */
+    /* ✅ تعديل الهيدر لإضافة جرس الإشعارات */
     header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         padding: 12px 16px;
@@ -271,12 +325,17 @@ CSS = """
         top: 0;
         z-index: 1000;
         box-shadow: var(--shadow-md);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
     .logo {
         font-size: 20px;
         font-weight: 800;
         color: white;
         letter-spacing: 2px;
+        flex: 1;
+        text-align: center;
     }
     .user-info {
         color: rgba(255,255,255,0.9);
@@ -285,7 +344,113 @@ CSS = """
         font-weight: 600;
     }
     
-    /* شريط البحث أصغر */
+    /* ✅ تصميم جرس الإشعارات */
+    .notification-bell {
+        position: relative;
+        cursor: pointer;
+        padding: 8px;
+        color: white;
+        font-size: 24px;
+        margin-left: 10px;
+        z-index: 1001;
+    }
+    .notification-badge {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: var(--error);
+        color: white;
+        font-size: 10px;
+        font-weight: 800;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--primary);
+    }
+    .notification-dropdown {
+        position: absolute;
+        top: 50px;
+        left: 10px;
+        width: 320px;
+        max-height: 400px;
+        overflow-y: auto;
+        background: white;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border);
+        display: none;
+        z-index: 1002;
+        text-align: right;
+    }
+    .notification-dropdown.show {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+    .notification-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        font-weight: 800;
+        color: var(--primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .notification-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: background 0.2s;
+        position: relative;
+    }
+    .notification-item:hover {
+        background: var(--bg);
+    }
+    .notification-item.unread {
+        background: #e8f5e9;
+        border-right: 3px solid var(--primary);
+    }
+    .notification-title {
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--text);
+        margin-bottom: 4px;
+        padding-left: 20px;
+    }
+    .notification-message {
+        font-size: 12px;
+        color: var(--text-light);
+        line-height: 1.4;
+    }
+    .notification-time {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+    .notification-delete {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: none;
+        border: none;
+        color: var(--error);
+        cursor: pointer;
+        font-size: 16px;
+        padding: 4px;
+        opacity: 0.7;
+    }
+    .notification-delete:hover {
+        opacity: 1;
+    }
+    .notification-empty {
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 13px;
+    }
+    
     .search-container {
         background: white;
         padding: 12px 16px;
@@ -331,7 +496,6 @@ CSS = """
         font-size: 14px;
     }
     
-    /* Bottom Nav أصغر */
     .bottom-nav {
         position: fixed;
         bottom: 0;
@@ -367,7 +531,6 @@ CSS = """
     }
     .nav-icon { font-size: 20px; }
     
-    /* Container Grid أصغر */
     .container {
         padding: 12px;
         display: grid;
@@ -377,7 +540,6 @@ CSS = """
         margin: 0 auto;
     }
     
-    /* بطاقات المنتجات أصغر */
     .card {
         background: var(--card);
         border-radius: var(--radius-md);
@@ -413,6 +575,18 @@ CSS = """
         font-size: 10px;
         font-weight: 800;
     }
+    /* ✅ شارة الخصم */
+    .discount-badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: var(--error);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 800;
+    }
     .card-body { padding: 12px; }
     .product-title {
         font-size: 12px;
@@ -428,12 +602,33 @@ CSS = """
         font-weight: 800;
         font-size: 14px;
     }
+    /* ✅ السعر الأصلي المشطوب */
+    .original-price {
+        text-decoration: line-through;
+        color: var(--error);
+        font-size: 12px;
+        margin-left: 8px;
+        font-weight: 600;
+    }
+    /* ✅ العد التنازلي للخصم */
+    .countdown-timer {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        color: #e65100;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 800;
+        margin-top: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid #ffcc80;
+    }
     .price-currency {
         font-size: 10px;
         color: var(--text-muted);
     }
     
-    /* أزرار أصغر */
     .btn {
         border: none;
         padding: 10px 16px;
@@ -471,7 +666,6 @@ CSS = """
         font-size: 15px;
     }
     
-    /* شريط الأصناف أصغر */
     .cat-bar {
         display: flex;
         overflow-x: auto;
@@ -527,7 +721,6 @@ CSS = """
         border-color: var(--primary);
     }
     
-    /* بطاقات الطلبات أصغر */
     .order-card {
         background: white;
         padding: 16px;
@@ -557,7 +750,6 @@ CSS = """
     .badge-approved { background: #e8f5e9; color: var(--primary); }
     .badge-rejected { background: #ffebee; color: var(--error); }
     
-    /* سلة التسوق أصغر */
     .cart-item {
         display: flex;
         gap: 12px;
@@ -583,7 +775,6 @@ CSS = """
     .empty-state-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.4; }
     .empty-state h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
     
-    /* Admin Sections */
     .admin-section {
         background: white;
         padding: 20px;
@@ -686,7 +877,6 @@ CSS = """
         to { transform: translateY(-50%) translateY(-4px); }
     }
     
-    /* Admin Container */
     .admin-container {
         max-width: 100%;
         margin: 0 auto;
@@ -1019,7 +1209,6 @@ CSS = """
     .shipping-price-input { display: none; }
     .shipping-price-input.show { display: block; animation: slideDown 0.3s ease; }
     
-    /* Login Logs */
     .login-log-card {
         background: white;
         border-radius: var(--radius-md);
@@ -1070,7 +1259,6 @@ CSS = """
     }
     .hidden-text { filter: blur(4px); user-select: none; }
     
-    /* صفحة حسابي الجديدة */
     .profile-header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
@@ -1180,10 +1368,74 @@ BASE_HTML = """<!DOCTYPE html>
     {flash}
     {content}
     {nav}
+    <script>
+        // ✅ JavaScript لإدارة الإشعارات
+        function toggleNotifications() {{
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('show');
+            if (dropdown.classList.contains('show')) {{
+                markNotificationsAsRead();
+            }}
+        }}
+        
+        function markNotificationsAsRead() {{
+            fetch('/mark_notifications_read', {{method: 'POST'}}).then(() => {{
+                const badge = document.querySelector('.notification-badge');
+                if (badge) badge.style.display = 'none';
+            }});
+        }}
+        
+        function deleteNotification(id, event) {{
+            event.stopPropagation();
+            fetch(`/delete_notification/${{id}}`, {{method: 'POST'}}).then(() => {{
+                const item = document.getElementById(`notif-${{id}}`);
+                if (item) item.remove();
+            }});
+        }}
+        
+        // ✅ JavaScript للعد التنازلي
+        function updateCountdowns() {{
+            document.querySelectorAll('.countdown-timer').forEach(timer => {{
+                const endDate = new Date(timer.dataset.end);
+                const now = new Date();
+                const diff = endDate - now;
+                
+                if (diff <= 0) {{
+                    timer.innerHTML = '⏰ انتهى العرض';
+                    timer.style.background = '#ffebee';
+                    timer.style.color = '#c62828';
+                    return;
+                }}
+                
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                
+                let text = '⏰ ';
+                if (days > 0) text += `${{days}} يوم `;
+                if (hours > 0) text += `${{hours}} ساعة `;
+                text += `${{minutes}} دقيقة`;
+                
+                timer.innerHTML = text;
+            }});
+        }}
+        
+        setInterval(updateCountdowns, 60000); // تحديث كل دقيقة
+        updateCountdowns();
+        
+        // إغلاق الإشعارات عند النقر خارجها
+        document.addEventListener('click', function(event) {{
+            const bell = document.querySelector('.notification-bell');
+            const dropdown = document.getElementById('notification-dropdown');
+            if (bell && dropdown && !bell.contains(event.target) && !dropdown.contains(event.target)) {{
+                dropdown.classList.remove('show');
+            }}
+        }});
+    </script>
 </body>
 </html>"""
 
-def render_page(title, content, show_nav=True, active_tab=None):
+def render_page(title, content, show_nav=True, active_tab=None, user_email=None):
     flash_html = ""
     if 'flash_messages' in session:
         flash_html = '<div class="flash-messages">' + ''.join([
@@ -1192,14 +1444,50 @@ def render_page(title, content, show_nav=True, active_tab=None):
         ]) + '</div>'
         session.modified = True
     
+    # ✅ إضافة جرس الإشعارات للهيدر
+    notification_html = ""
+    if user_email:
+        unread_count = get_unread_count(user_email)
+        notifications = get_user_notifications(user_email)
+        
+        notif_items = ""
+        if notifications:
+            for n in notifications:
+                notif_class = 'unread' if not n['is_read'] else ''
+                notif_items += f'''
+                <div class="notification-item {notif_class}" id="notif-{n['id']}" onclick="window.location.href='{n['link'] or '/'}'">
+                    <button class="notification-delete" onclick="deleteNotification({n['id']}, event)">🗑️</button>
+                    <div class="notification-title">{n['title']}</div>
+                    <div class="notification-message">{n['message']}</div>
+                    <div class="notification-time">{n['created_at'][:16]}</div>
+                </div>
+                '''
+        else:
+            notif_items = '<div class="notification-empty">لا توجد إشعارات</div>'
+        
+        badge_html = f'<div class="notification-badge">{unread_count}</div>' if unread_count > 0 else ''
+        
+        notification_html = f'''
+        <div class="notification-bell" onclick="toggleNotifications()">
+            🔔
+            {badge_html}
+            <div class="notification-dropdown" id="notification-dropdown">
+                <div class="notification-header">
+                    <span>الإشعارات</span>
+                    <span style="font-size: 12px; color: var(--text-muted);">{len(notifications)} إشعار</span>
+                </div>
+                {notif_items}
+            </div>
+        </div>
+        '''
+    
     nav_html = ""
     if show_nav and 'user' in session:
-        # ✨ إضافة حسابي في النافبار
         items = [
             ('/', 'الرئيسية', '🏠', 'home'),
             ('/cart', 'السلة', '🛒', 'cart'),
             ('/orders', 'طلباتي', '📦', 'orders'),
-            ('/profile', 'حسابي', '👤', 'profile')  # جديد
+            ('/profile', 'حسابي', '👤', 'profile')
         ]
         if session.get('is_admin'):
             items.append(('/admin', 'التحكم', '⚙️', 'admin'))
@@ -1209,7 +1497,59 @@ def render_page(title, content, show_nav=True, active_tab=None):
             for p, n, i, tab in items
         ]) + '</div>'
     
-    return BASE_HTML.format(css=CSS, title=title, flash=flash_html, content=content, nav=nav_html)
+    # ✅ إضافة جرس الإشعارات في الهيدر
+    header_with_notifications = f'''
+    <header>
+        {notification_html}
+        <div class="logo">THAWANI</div>
+        <div style="width: 40px;"></div>
+    </header>
+    '''
+    
+    return BASE_HTML.format(css=CSS, title=title, flash=flash_html, content=header_with_notifications + content, nav=nav_html)
+
+# ✅ دوال الإشعارات
+def get_user_notifications(user_email):
+    conn = get_db()
+    try:
+        notifications = conn.execute(
+            "SELECT * FROM notifications WHERE user_email=? ORDER BY id DESC LIMIT 20",
+            (user_email,)
+        ).fetchall()
+        return notifications
+    except:
+        return []
+    finally:
+        conn.close()
+
+@app.route('/mark_notifications_read', methods=['POST'])
+@login_required
+def mark_notifications_read():
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE notifications SET is_read=1 WHERE user_email=? AND is_read=0",
+            (session['user'],)
+        )
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Error marking notifications as read: {e}")
+    finally:
+        conn.close()
+    return jsonify({'success': True})
+
+@app.route('/delete_notification/<int:id>', methods=['POST'])
+@login_required
+def delete_notification(id):
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM notifications WHERE id=? AND user_email=?", (id, session['user']))
+        conn.commit()
+    except Exception as e:
+        logger.error(f"Error deleting notification: {e}")
+    finally:
+        conn.close()
+    return jsonify({'success': True})
 
 @app.route('/')
 @login_required
@@ -1233,6 +1573,23 @@ def index():
     
     prods = conn.execute(query, params).fetchall()
     cart_count = conn.execute("SELECT SUM(quantity) FROM cart WHERE user_email=?", (session['user'],)).fetchone()[0] or 0
+    
+    # ✅ التحقق من الخصومات وإضافة العد التنازلي
+    current_time = datetime.now()
+    products_with_discount_info = []
+    for p in prods:
+        product = dict(p)
+        if product['discount_end_date']:
+            end_date = datetime.strptime(product['discount_end_date'], '%Y-%m-%d %H:%M:%S')
+            if end_date > current_time:
+                product['has_active_discount'] = True
+                product['discount_end'] = product['discount_end_date']
+            else:
+                product['has_active_discount'] = False
+        else:
+            product['has_active_discount'] = False
+        products_with_discount_info.append(product)
+    
     conn.close()
     
     html_cats = ''
@@ -1250,23 +1607,40 @@ def index():
     '''
     
     html_prods = ''
-    if prods:
-        for p in prods:
+    if products_with_discount_info:
+        for p in products_with_discount_info:
             if p['shipping_type'] == 'free':
                 shipping_html = '<span class="shipping-badge shipping-free">🚚 مجاني</span>'
             else:
                 shipping_html = f'<span class="shipping-badge shipping-paid">🚚 {p["shipping_price"]:.3f}</span>'
+            
+            # ✅ عرض الأسعار مع الخصم
+            price_html = f'<div class="price">{p["price"]:.3f} <span class="price-currency">OMR</span></div>'
+            discount_badge = ''
+            countdown_html = ''
+            
+            if p['has_active_discount'] and p['original_price']:
+                price_html = f'''
+                <div class="price">
+                    {p["price"]:.3f} <span class="price-currency">OMR</span>
+                    <span class="original-price">{p["original_price"]:.3f}</span>
+                </div>
+                '''
+                discount_badge = '<div class="discount-badge">خصم</div>'
+                countdown_html = f'<div class="countdown-timer" data-end="{p["discount_end"]}">⏰ جاري التحميل...</div>'
             
             html_prods += f'''
             <div class="card">
                 <div class="card-img-wrapper">
                     <img src="/static/uploads/{p["img"]}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23e8f5e9%22 width=%22100%22 height=%22100%22/></svg>'">
                     <div class="card-badge">⭐ جديد</div>
+                    {discount_badge}
                 </div>
                 <div class="card-body">
                     <div class="product-title">{p["name"]}</div>
                     <div style="margin-bottom: 8px;">{shipping_html}</div>
-                    <div class="price">{p["price"]:.3f} <span class="price-currency">OMR</span></div>
+                    {price_html}
+                    {countdown_html}
                     <a href="/product/{p["id"]}" class="btn btn-primary btn-block">التفاصيل</a>
                 </div>
             </div>
@@ -1280,10 +1654,7 @@ def index():
     user_type = 'أدمن' if session.get('is_admin') else 'عميل'
     
     return render_template_string(render_page('الرئيسية', f"""
-    <header>
-        <div class="logo">THAWANI</div>
-        <div class="user-info">{session['user'].split('@')[0]} | سلة: {cart_count} | {user_type}</div>
-    </header>
+    <div class="user-info" style="text-align: center; margin: 10px 0;">{session['user'].split('@')[0]} | سلة: {cart_count} | {user_type}</div>
     {search_html}
     <div class="cat-bar">
         <a href="/" class="cat-item {'active' if cat=='الكل' and not search else ''}">الكل</a>
@@ -1292,30 +1663,22 @@ def index():
     <div class="container">
         {html_prods}
     </div>
-    """, active_tab='home'))
+    """, active_tab='home', user_email=session['user']))
 
 @app.route('/profile')
 @login_required
 def profile():
-    """✨ صفحة حسابي الجديدة"""
     conn = get_db()
     
-    # جلب معلومات المستخدم
     user = conn.execute("SELECT * FROM users WHERE email=?", (session['user'],)).fetchone()
-    
-    # جلب عدد الطلبات
     orders_count = conn.execute("SELECT COUNT(*) FROM orders WHERE user_email=?", (session['user'],)).fetchone()[0]
-    
-    # جلب عدد منتجات السلة
     cart_count = conn.execute("SELECT SUM(quantity) FROM cart WHERE user_email=?", (session['user'],)).fetchone()[0] or 0
     
-    # جلب آخر 3 طلبات
     recent_orders = conn.execute(
         "SELECT * FROM orders WHERE user_email=? ORDER BY id DESC LIMIT 3", 
         (session['user'],)
     ).fetchall()
     
-    # جلب منتجات السلة
     cart_items = conn.execute('''
         SELECT p.name, p.price, p.img, c.quantity 
         FROM cart c 
@@ -1325,7 +1688,6 @@ def profile():
     
     conn.close()
     
-    # بناء HTML الطلبات الأخيرة
     orders_html = ''
     if recent_orders:
         for o in recent_orders:
@@ -1345,7 +1707,6 @@ def profile():
     else:
         orders_html = '<div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">لا توجد طلبات</div>'
     
-    # بناء HTML السلة
     cart_html = ''
     if cart_items:
         for item in cart_items:
@@ -1370,7 +1731,6 @@ def profile():
     </div>
     
     <div style="padding: 0 16px 20px;">
-        <!-- معلومات الحساب -->
         <div class="profile-menu">
             <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 800; color: var(--primary); font-size: 14px;">معلومات الحساب</div>
             <div class="profile-menu-item">
@@ -1390,7 +1750,6 @@ def profile():
             </div>
         </div>
         
-        <!-- الطلبات -->
         <div class="profile-menu" style="margin-top: 16px;">
             <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 800; color: var(--primary); font-size: 14px; display: flex; justify-content: space-between; align-items: center;">
                 <span>طلباتي</span>
@@ -1403,7 +1762,6 @@ def profile():
             </a>
         </div>
         
-        <!-- السلة -->
         <div class="profile-menu" style="margin-top: 16px;">
             <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 800; color: var(--primary); font-size: 14px; display: flex; justify-content: space-between; align-items: center;">
                 <span>سلة التسوق</span>
@@ -1412,23 +1770,21 @@ def profile():
             {cart_html}
         </div>
         
-        <!-- الإشعارات -->
         <div class="profile-menu" style="margin-top: 16px;">
             <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 800; color: var(--primary); font-size: 14px;">الإشعارات</div>
             <div class="profile-menu-item">
                 <span class="profile-menu-icon">🔔</span>
                 <span>الإشعارات</span>
-                <span style="margin-right: auto; font-size: 12px; color: var(--text-muted);">لا توجد إشعارات جديدة</span>
+                <a href="/" style="margin-right: auto; font-size: 12px; color: var(--primary);">عرض الكل</a>
             </div>
         </div>
     </div>
     
-    <!-- زر الخروج -->
     <a href="/logout" class="logout-btn" style="text-decoration: none;">
         <span>🚪</span>
         <span>تسجيل الخروج</span>
     </a>
-    """, active_tab='profile'))
+    """, active_tab='profile', user_email=session['user']))
 
 @app.route('/product/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -1456,6 +1812,27 @@ def product(id):
     revs = conn.execute("SELECT * FROM reviews WHERE product_id=? ORDER BY id DESC", (id,)).fetchall()
     conn.close()
     
+    if not p:
+        abort(404)
+    
+    # ✅ التحقق من الخصم
+    current_time = datetime.now()
+    has_discount = False
+    countdown_html = ''
+    price_display = f'<div class="price" style="font-size:28px; margin-bottom:16px; font-weight: 800;">{p["price"]:.3f} <span style="font-size: 14px; color: var(--text-muted);">OMR</span></div>'
+    
+    if p['discount_end_date']:
+        end_date = datetime.strptime(p['discount_end_date'], '%Y-%m-%d %H:%M:%S')
+        if end_date > current_time and p['original_price']:
+            has_discount = True
+            price_display = f'''
+            <div class="price" style="font-size:28px; margin-bottom:8px; font-weight: 800;">
+                {p["price"]:.3f} <span style="font-size: 14px; color: var(--text-muted);">OMR</span>
+                <span class="original-price" style="font-size: 18px;">{p["original_price"]:.3f} OMR</span>
+            </div>
+            <div class="countdown-timer" data-end="{p["discount_end_date"]}" style="margin-bottom: 16px; font-size: 14px;">⏰ جاري التحميل...</div>
+            '''
+    
     if p['shipping_type'] == 'free':
         shipping_html = '<span class="shipping-badge shipping-free" style="font-size: 12px; padding: 6px 12px;">🚚 شحن مجاني</span>'
     else:
@@ -1480,15 +1857,15 @@ def product(id):
         '''
     
     return render_template_string(render_page('المنتج', f"""
-    <header><div class="logo">تفاصيل المنتج</div></header>
     <div style="padding: 16px; max-width: 600px; margin: 0 auto;">
         <div style="position: relative; margin-bottom: 20px; border-radius:var(--radius-lg); overflow:hidden; box-shadow: var(--shadow-md);">
             <img src="/static/uploads/{p['img']}" style="width:100%; display:block;">
             <div class="premium-badge" style="position: absolute; top: 12px; right: 12px;">⭐ مميز</div>
+            {'<div class="discount-badge" style="position: absolute; top: 12px; left: 12px; font-size: 14px;">خصم خاص</div>' if has_discount else ''}
         </div>
         <h2 style="color:var(--primary); margin-bottom:12px; font-size: 24px; font-weight: 800;">{p['name']}</h2>
         <div style="margin-bottom: 16px;">{shipping_html}</div>
-        <div class="price" style="font-size:28px; margin-bottom:16px; font-weight: 800;">{p['price']:.3f} <span style="font-size: 14px; color: var(--text-muted);">OMR</span></div>
+        {price_display}
         <p style="color:var(--text-light); margin-bottom:24px; line-height: 1.8; font-size: 15px;">{p['description'] or 'لا يوجد وصف'}</p>
         <a href="/add_to_cart/{p['id']}" class="btn btn-primary btn-block" style="padding: 14px; font-size: 16px;">أضف للسلة 🛒</a>
         
@@ -1521,7 +1898,7 @@ def product(id):
             </form>
         </div>
     </div>
-    """))
+    """, user_email=session['user']))
 
 @app.route('/add_to_cart/<int:id>')
 @login_required
@@ -1603,12 +1980,11 @@ def cart():
         checkout_html = ''
     
     return render_template_string(render_page('السلة', f"""
-    <header><div class="logo">سلة التسوق</div></header>
     <div style="padding: 16px; max-width: 600px; margin: 0 auto;">
         {html_items}
         {checkout_html}
     </div>
-    """, active_tab='cart'))
+    """, active_tab='cart', user_email=session['user']))
 
 @app.route('/remove_from_cart/<int:pid>')
 @login_required
@@ -1665,6 +2041,16 @@ def checkout():
                     conn.commit()
                     conn.close()
                     
+                    # ✅ إشعار للمستخدم بطلبه الجديد
+                    create_notification(
+                        session['user'],
+                        'تم إرسال طلبك بنجاح! 🎉',
+                        f'طلبك رقم #{order_id} قيد المراجعة الآن',
+                        'order',
+                        f'/orders',
+                        order_id
+                    )
+                    
                     if 'flash_messages' not in session:
                         session['flash_messages'] = []
                     session['flash_messages'].append({
@@ -1691,7 +2077,6 @@ def checkout():
         shipping_breakdown = f'<div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top: 1px dashed var(--border);"><span style="font-size: 14px; color: var(--text-muted); font-weight: 700;">تكلفة الشحن:</span><span style="font-weight: 700; color: #e65100;">{shipping_total:.3f} OMR</span></div>'
     
     return render_template_string(render_page('إتمام الطلب', f"""
-    <header><div class="logo">إتمام الطلب</div></header>
     <div style="padding: 16px; max-width: 500px; margin: 0 auto;">
         <div style="background:white; padding:20px; border-radius:var(--radius-md); margin-bottom:16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border);">
             <h3 style="margin-bottom:16px; color:var(--primary); font-weight: 800; font-size: 18px;">📋 ملخص الطلب</h3>
@@ -1721,7 +2106,7 @@ def checkout():
             <button type="submit" class="btn btn-primary btn-block" style="padding: 14px; font-size: 16px; margin-top: 10px;">✅ تأكيد الطلب</button>
         </form>
     </div>
-    """))
+    """, user_email=session['user']))
 
 @app.route('/order_success/<int:order_id>')
 @login_required
@@ -1749,7 +2134,7 @@ def order_success(order_id):
         </div>
         <a href="/orders" class="btn btn-primary" style="padding: 14px 28px; font-size: 16px;">📦 متابعة الطلبات</a>
     </div>
-    """, show_nav=True))
+    """, show_nav=True, user_email=session['user']))
 
 @app.route('/orders')
 @login_required
@@ -1880,11 +2265,10 @@ def orders_history():
         html_orders = '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>لا توجد طلبات</h3><a href="/" class="btn btn-primary" style="margin-top: 16px;">تصفح المنتجات</a></div>'
     
     return render_template_string(render_page('طلباتي', f"""
-    <header><div class="logo">طلباتي</div></header>
     <div style="padding: 16px; max-width: 600px; margin: 0 auto;">
         {html_orders}
     </div>
-    """, active_tab='orders'))
+    """, active_tab='orders', user_email=session['user']))
 
 @app.route('/submit_delivery_review/<int:order_id>', methods=['POST'])
 @login_required
@@ -1937,7 +2321,6 @@ def view_receipt(order_id):
         abort(403)
     
     return render_template_string(render_page('الإيصال', f"""
-    <header><div class="logo">إيصال الدفع</div></header>
     <div style="padding: 16px; text-align: center;">
         <div style="background: white; padding: 24px; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border: 2px solid var(--border); max-width: 400px; margin: 0 auto;">
             <h3 style="margin-bottom: 20px; color: var(--primary); font-weight: 800; font-size: 20px;">طلب #{order_id}</h3>
@@ -1945,7 +2328,7 @@ def view_receipt(order_id):
             <a href="/orders" class="btn btn-outline" style="padding: 12px 24px; font-weight: 700;">⬅️ العودة للطلبات</a>
         </div>
     </div>
-    """))
+    """, user_email=session['user']))
 
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
@@ -1958,24 +2341,45 @@ def admin():
         
         if action == 'add_product':
             name = request.form.get('name', '').strip()
+            original_price = request.form.get('original_price', type=float)
             price = request.form.get('price', type=float)
             cat = request.form.get('cat', '').strip()
             stock = request.form.get('stock', type=int, default=0)
             img = request.files.get('img')
             shipping_type = request.form.get('shipping_type', 'free')
             shipping_price = request.form.get('shipping_price', type=float, default=0)
+            discount_end = request.form.get('discount_end', '')
             
             if shipping_type == 'free':
                 shipping_price = 0
+            
+            # ✅ معالجة تاريخ انتهاء الخصم
+            discount_end_date = None
+            if discount_end:
+                try:
+                    discount_end_date = datetime.strptime(discount_end, '%Y-%m-%dT%H:%M')
+                except:
+                    pass
             
             if name and price and cat and img:
                 filename = save_upload(img)
                 if filename:
                     conn.execute('''
-                        INSERT INTO products (name, price, img, category, description, stock, shipping_type, shipping_price)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (name, price, filename, cat, request.form.get('desc', ''), stock, shipping_type, shipping_price))
+                        INSERT INTO products (name, price, original_price, discount_price, discount_end_date, img, category, description, stock, shipping_type, shipping_price)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (name, price, original_price, price, discount_end_date, filename, cat, request.form.get('desc', ''), stock, shipping_type, shipping_price))
                     conn.commit()
+                    
+                    # ✅ إشعار للجميع بإضافة منتج جديد
+                    notif_title = f'🆕 منتج جديد: {name}'
+                    notif_message = f'تم إضافة {name} إلى المتجر'
+                    if original_price and original_price > price:
+                        discount_percent = int(((original_price - price) / original_price) * 100)
+                        notif_message += f' بخصم {discount_percent}%'
+                        notif_title += ' (عرض خاص!)'
+                    
+                    notify_all_users(notif_title, notif_message, 'product', f'/product/{conn.execute("SELECT last_insert_rowid()").fetchone()[0]}')
+                    
                     if 'flash_messages' not in session:
                         session['flash_messages'] = []
                     session['flash_messages'].append({
@@ -1990,6 +2394,10 @@ def admin():
                 try:
                     conn.execute("INSERT INTO categories (name) VALUES (?)", (name,))
                     conn.commit()
+                    
+                    # ✅ إشعار للجميع بإضافة صنف جديد
+                    notify_all_users(f'📁 صنف جديد: {name}', f'تم إضافة صنف {name} إلى المتجر', 'category', '/')
+                    
                     if 'flash_messages' not in session:
                         session['flash_messages'] = []
                     session['flash_messages'].append({
@@ -2011,12 +2419,27 @@ def admin():
             status = request.form.get('status')
             notes = request.form.get('notes', '')
             if oid and status:
+                order = conn.execute("SELECT user_email FROM orders WHERE id=?", (oid,)).fetchone()
+                
                 if status == 'approved':
                     conn.execute("UPDATE orders SET status=?, notes=?, accepted_at=CURRENT_TIMESTAMP WHERE id=?", 
                                 (status, notes, oid))
                 else:
                     conn.execute("UPDATE orders SET status=?, notes=? WHERE id=?", (status, notes, oid))
                 conn.commit()
+                
+                # ✅ إشعار للعميل بتغيير حالة الطلب
+                if order:
+                    status_text = 'مقبول' if status == 'approved' else 'مرفوض' if status == 'rejected' else 'قيد المراجعة'
+                    create_notification(
+                        order['user_email'],
+                        f'تحديث طلبك #{oid}',
+                        f'طلبك الآن: {status_text}',
+                        'order',
+                        '/orders',
+                        oid
+                    )
+                
                 if 'flash_messages' not in session:
                     session['flash_messages'] = []
                 session['flash_messages'].append({
@@ -2113,6 +2536,12 @@ def admin():
             shipping_badge = '<span class="shipping-badge shipping-free">🚚 مجاني</span>'
         else:
             shipping_badge = f'<span class="shipping-badge shipping-paid">🚚 {p["shipping_price"]:.3f}</span>'
+        
+        # ✅ عرض معلومات الخصم في لوحة التحكم
+        discount_info = ''
+        if p['original_price'] and p['original_price'] > p['price']:
+            discount_info = f'<div style="color: var(--error); font-size: 11px; font-weight: 700;">خصم من {p["original_price"]:.3f}</div>'
+        
         html_products_grid += f'''
         <div class="product-card-admin">
             <img src="/static/uploads/{p["img"]}" class="product-img-admin" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22180%22><rect fill=%22%23e8f5e9%22 width=%22300%22 height=%22180%22/></svg>'">
@@ -2122,6 +2551,7 @@ def admin():
                     <span class="category-tag">{p["category"]}</span>
                     {shipping_badge}
                 </div>
+                {discount_info}
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <span class="product-price-admin">{p["price"]:.3f} OMR</span>
                     <form method="POST" style="display: inline;" onsubmit="return confirm('حذف المنتج نهائياً؟')">
@@ -2266,11 +2696,27 @@ def admin():
                             <label>اسم المنتج *</label>
                             <input type="text" name="name" class="form-control-modern" placeholder="مثال: عطر مسك الطهارة" required>
                         </div>
+                    </div>
+                    
+                    <!-- ✅ حقول الخصم الجديدة -->
+                    <div class="form-grid-2">
                         <div class="form-group-modern">
-                            <label>السعر *</label>
+                            <label>السعر الأصلي (قبل الخصم)</label>
+                            <input type="number" name="original_price" step="0.001" class="form-control-modern" placeholder="0.000 (اتركه فارغاً إذا لا يوجد خصم)">
+                        </div>
+                        <div class="form-group-modern">
+                            <label>السعر بعد الخصم *</label>
                             <input type="number" name="price" step="0.001" class="form-control-modern" placeholder="0.000" required>
                         </div>
                     </div>
+                    
+                    <!-- ✅ تاريخ انتهاء الخصم -->
+                    <div class="form-group-modern">
+                        <label>تاريخ ووقت انتهاء الخصم</label>
+                        <input type="datetime-local" name="discount_end" class="form-control-modern">
+                        <small style="color: var(--text-muted); font-size: 11px;">اتركه فارغاً إذا لا يوجد خصم مؤقت</small>
+                    </div>
+                    
                     <div class="form-grid-2">
                         <div class="form-group-modern">
                             <label>الصنف *</label>
@@ -2429,7 +2875,7 @@ def admin():
             }}
         }}
     </script>
-    """))
+    """, user_email=session['user']))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
